@@ -1,0 +1,12 @@
+{
+    "name": "morozov/bxmod",
+    "description": "Base module for Bitrix",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Morozov Roman",
+            "email": "r-r-roma-a-a@yandex.ru"
+        }
+    ],
+    "require": {}
+}
