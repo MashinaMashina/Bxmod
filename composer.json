@@ -1,5 +1,5 @@
 {
-    "name": "morozov/bxmod",
+    "name": "mashinamashina/bxmod",
     "description": "Base module for Bitrix",
     "type": "library",
     "license": "MIT",
@@ -12,7 +12,7 @@
     "require": {},
     "autoload": {
         "psr-4": {
-            "Morozov\\Bxmod\\": "src/"
+            "MashinaMashina\\Bxmod\\": "src/"
         }
-    },
+    }
 }
