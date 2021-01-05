@@ -2,11 +2,17 @@
     "name": "morozov/bxmod",
     "description": "Base module for Bitrix",
     "type": "library",
+    "license": "MIT",
     "authors": [
         {
             "name": "Morozov Roman",
             "email": "r-r-roma-a-a@yandex.ru"
         }
     ],
-    "require": {}
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "Morozov\\Bxmod\\": "src/"
+        }
+    },
 }
