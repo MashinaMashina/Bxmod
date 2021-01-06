@@ -6,9 +6,8 @@ use \Bitrix\Main\Type\Date;
 use \Bitrix\Main\Application;
 use \Bitrix\Main\ORM\Fields\FieldTypeMask;
 use \MashinaMashina\Bxmod\Tools\Html;
+use \MashinaMashina\Bxmod\Tools\AssetsManager;
 use \MashinaMashina\Bxmod\Orm\Entity\DataManager;
-
-Loc::loadMessages(__FILE__);
 
 class FormGenerator
 {
@@ -26,10 +25,12 @@ class FormGenerator
 	const MESS_ERROR = 'ERROR';
 	const MESS_OK = 'OK';
 	
-	public function __construct(DataManager $entityClassname)
+	public function __construct(DataManager $entityClass)
 	{
-		$this->entityClass = $entityClassname;
+		$this->entityClass = $entityClass;
 		$this->request = Application::getInstance()->getContext()->getRequest();
+		
+		AssetsManager::init();
 	}
 	
 	public function initForm($formLink, $listLink)
@@ -63,7 +64,7 @@ class FormGenerator
 		echo bitrix_sessid_post();
 		$tabControl->Begin();
 		
-		$avaibledFields = ($this->entityClass)::getEntity()->getFields();
+		$avaibledFields = $this->entityClass->getEntity()->getFields();
 		$lastTab = -1;
 		$tabStarted = false;
 		foreach ($avaibledFields as $field)
@@ -111,168 +112,12 @@ class FormGenerator
 	
 	protected function buildEditArea($field)
 	{
-		$required = $field->getParameter('required');
-		$fieldName = htmlspecialcharsbx($field->getTitle());
+		if ($field->getParameter('bxmod_hidden') === true)
+			return;
 		
-		if ($field->getParameter('required'))
-		{
-			$fieldName = '<b>' . $fieldName . '</b>'; 
-		}
+		$class = str_replace('MashinaMashina\Bxmod\ORM\Fields', 'MashinaMashina\Bxmod\Admin\Builders', get_class($field));
 		
-		echo '<tr><td width="40%">';
-		echo $fieldName;
-		echo '</td><td width="60%">';
-		echo $this->buildInput($field);
-		echo '</td></tr>';
-	}
-	
-	protected function buildInput($field)
-	{
-		switch ($field->getTypeMask())
-		{
-			case FieldTypeMask::SCALAR:
-				return $this->buildScalarInput($field);
-			
-			case FieldTypeMask::MANY_TO_MANY:
-				return $this->buildRelationInput($field);
-		}
-	}
-	
-	protected function buildRelationInput($field)
-	{
-		$autocompleteLink = $field->getParameter('bxmod_input_ajax_autocomplete_link');
-		
-		if (empty($autocompleteLink))
-		{
-			// TODO. getList + generate select
-		}
-		else
-		{
-			if (strpos($autocompleteLink, '?') === false)
-				$autocompleteLink .= '?';
-			else
-				$autocompleteLink .= '&';
-			
-			$autocompleteLink .= bitrix_sessid_get() . '&query=';
-			
-			$options = '';
-			$selected = $this->getEntity()->get($field->getName());
-			foreach ($selected as $select)
-			{
-				$options .= Html::buildTag('option', [
-					'value' => $select['id'],
-					'selected' => '',
-				], htmlentities($select['name']));
-			}
-			
-			\CJSCore::Init(['chosen', 'autocomplete']);
-			
-			$uniqid = 'id'.uniqid();
-			
-			$data = ['id' => $uniqid, 'multiple' => '', 'name' => $field->getName() . '[]'];
-			$result = Html::buildTag('select', $data, $options . '<option value="" disabled>Enter name...</option>');
-			
-			$result .= '<script>
-				$(function(){
-					$("#'.$uniqid.'").chosen({
-						width:"300px",
-					});
-					
-					$(".chosen-choices input").autocomplete({
-						minLength: 2,
-						delay: 500,
-						source: function( request, response ) {
-							$.ajax({
-								url: "'.$autocompleteLink.'"+request.term,
-								dataType: "json",
-							}).done(function(data) {
-									$("#'.$uniqid.' option").each(function(){
-										if (! $(this).prop("selected"))
-											$(this).remove();
-									});
-									data.reverse();
-									response( $.map( data, function( item ) {
-										$("#'.$uniqid.'").prepend(\'<option value="\'+item.id+\'">\' + item.name + \'</option>\');
-									}));
-									$("#'.$uniqid.'").trigger("chosen:updated");
-									$(".chosen-choices input").val(request.term);
-								});
-						}
-					});
-				});
-			</script>';
-		}
-		
-		return $result;
-	}
-	
-	protected function buildScalarInput($field)
-	{
-		$entity = $this->getEntity();
-		
-		$printName = htmlspecialcharsbx($field->getName());
-		$printValue = htmlspecialcharsbx($entity[$field->getName()]);
-		
-		if ($field->getParameter('bxmod_readonly'))
-		{
-			return $printValue;
-		}
-		
-		$tagData = [
-			'name' => $field->getName(),
-			'value' => $entity[$field->getName()],
-		];
-		
-		switch($field->getDataType())
-		{
-			case 'integer':
-			case 'float':
-			case 'string':
-				return Html::buildSimpleTag('input', $tagData + [
-					'type' => 'text',
-				]);
-			
-			case 'date':
-				\CJSCore::Init(array("jquery","date"));
-				return Html::buildSimpleTag('input', $tagData + [
-					'type' => 'text',
-					'onclick' => 'BX.calendar({node: this, field: this, bTime: false})',
-				]);
-			
-			case 'enum':
-				$options = '';
-				foreach ($field->getParameter('values') as $value)
-				{
-					$selected = ($value === $tagData['value'] ? 'selected' : '');
-					
-					$options .= Html::buildTag('option', [
-						'value' => $value,
-						$selected => '',
-					], $value);
-				}
-				
-				return Html::buildTag('select', [
-					'name' => $field->getName(),
-				], $options);
-			
-			case 'boolean':
-				$checked = ($tagData['value'] ? 'checked' : '');
-			
-				$str = Html::buildSimpleTag('input', [
-					'type' => 'hidden',
-					'value' => 'N',
-				] + $tagData);
-				
-				return $str . Html::buildSimpleTag('input', [
-					'type' => 'checkbox',
-					'value' => 'Y',
-					$checked => '',
-				] + $tagData);
-			
-			default:
-				return 'not supported type: ' . $field->getDataType();
-				break;
-		}
+		echo ($class)::build($field, $this->getEntity(), $this->entityClass);
 	}
 	
 	protected function getEntity()
@@ -281,19 +126,19 @@ class FormGenerator
 		{
 			if ($this->primaryKey > 0)
 			{
-				$this->entity = ($this->entityClass)::getList(['filter' => [
+				$this->entity = $this->entityClass->getList(['filter' => [
 					$this->primaryCode => $this->primaryKey,
 				]])->fetchObject();
 				
 				if (! $this->entity)
 				{
 					$this->primaryKey = 0;
-					$this->entity = ($this->entityClass)::createObject();
+					$this->entity = $this->entityClass->createObject();
 				}
 			}
 			else
 			{
-				$this->entity = ($this->entityClass)::createObject();
+				$this->entity = $this->entityClass->createObject();
 			}
 		}
 		
@@ -319,7 +164,7 @@ class FormGenerator
 		
 		if ($obResult->isSuccess())
 		{
-			$cacheTag = ($this->entityClass)::getCacheTag();
+			$cacheTag = $this->entityClass->getCacheTag();
 			
 			if (! empty($cacheTag))
 			{
@@ -385,14 +230,15 @@ class FormGenerator
 	
 	protected function fillSavingEntity()
 	{
-		$avaibledFields = ($this->entityClass)::getEntity()->getFields();
+		$avaibledFields = $this->entityClass->getEntity()->getFields();
 		
 		$entity = $this->getEntity();
 		foreach ($avaibledFields as $field)
 		{
 			$name = $field->getName();
 			$value = $this->request->getPost($name);
-			if ($field->getParameter('bxmod_readonly') or $value === null)
+			$editable = ($field->getParameter('bxmod_readonly') !== true and $field->getParameter('bxmod_hidden') !== true);
+			if (! $editable or $value === null)
 				continue;
 			
 			switch ($field->getTypeMask())
@@ -412,6 +258,7 @@ class FormGenerator
 					$entity->set($field->getName(), $value);
 					break;
 				
+				case FieldTypeMask::ONE_TO_MANY:
 				case FieldTypeMask::MANY_TO_MANY:
 					if (! is_array($value))
 						$value = [$value];
@@ -463,8 +310,7 @@ class FormGenerator
 		}
 		
 		return [[
-				"TAB" => 'Tab',
-				"TITLE"=> 'Tab title',
+			"TAB" => '-',
 		]];
 	}
 	

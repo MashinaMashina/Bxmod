@@ -5,7 +5,7 @@
  * Добавим функционал в более старые битриксы.
  */
 
-namespace MashinaMashina\Bxmod\ORM\Fields\Relations;
+namespace MashinaMashina\Bxmod\ORM\Fields;
 
 trait ParametersTrait
 {
