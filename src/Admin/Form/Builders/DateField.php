@@ -1,6 +1,6 @@
 <?php
 
-namespace MashinaMashina\Bxmod\Admin\Builders;
+namespace MashinaMashina\Bxmod\Admin\Form\Builders;
 
 use \MashinaMashina\Bxmod\Tools\Html;
 

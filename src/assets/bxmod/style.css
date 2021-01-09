@@ -1,0 +1,9 @@
+.bxmod-icon {
+	display: block;
+	width: 30px;
+	height: 30px;
+	background: url(/bitrix/panel/main/images/popup_menu_sprite_2.png) no-repeat 6px -1080px;
+}
+.bxmod-icon-delete {
+	background-position: 6px -780px;
+}

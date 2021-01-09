@@ -1,15 +1,16 @@
 <?php
-namespace MashinaMashina\Bxmod\Admin;
+namespace MashinaMashina\Bxmod\Admin\Form;
 
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Type\Date;
 use \Bitrix\Main\Application;
 use \Bitrix\Main\ORM\Fields\FieldTypeMask;
+use \Bitrix\Main\ORM\Fields\Relations\Relation;
 use \MashinaMashina\Bxmod\Tools\Html;
 use \MashinaMashina\Bxmod\Tools\AssetsManager;
 use \MashinaMashina\Bxmod\Orm\Entity\DataManager;
 
-class FormGenerator
+class Generator
 {
 	protected $entityClass;
 	protected $entity;
@@ -21,6 +22,7 @@ class FormGenerator
 	protected $primaryCode = 'ID';
 	protected $topMenu = [];
 	protected $tabs = [];
+	protected $tiedEntities = [];
 	
 	const MESS_ERROR = 'ERROR';
 	const MESS_OK = 'OK';
@@ -31,6 +33,7 @@ class FormGenerator
 		$this->request = Application::getInstance()->getContext()->getRequest();
 		
 		AssetsManager::init();
+		\CJSCore::Init(['bxmod_admin_form']);
 	}
 	
 	public function initForm($formLink, $listLink)
@@ -115,7 +118,7 @@ class FormGenerator
 		if ($field->getParameter('bxmod_hidden') === true)
 			return;
 		
-		$class = str_replace('MashinaMashina\Bxmod\ORM\Fields', 'MashinaMashina\Bxmod\Admin\Builders', get_class($field));
+		$class = str_replace('MashinaMashina\Bxmod\ORM\Fields', 'MashinaMashina\Bxmod\Admin\Form\Builders', get_class($field));
 		
 		echo ($class)::build($field, $this->getEntity(), $this->entityClass);
 	}
@@ -126,9 +129,25 @@ class FormGenerator
 		{
 			if ($this->primaryKey > 0)
 			{
-				$this->entity = $this->entityClass->getList(['filter' => [
+				$select = ['*'];
+				
+				$fields = $this->entityClass->getEntity()->getFields();
+				foreach ($fields as $field)
+				{
+					if ($field instanceof Relation)
+					{
+						$select[] = $field->getName() . '.*';
+					}
+				}
+				
+				$filter = [
 					$this->primaryCode => $this->primaryKey,
-				]])->fetchObject();
+				];
+				
+				$this->entity = $this->entityClass->getList([
+					'filter' => $filter,
+					'select' => $select,
+				])->fetchObject();
 				
 				if (! $this->entity)
 				{
@@ -155,15 +174,17 @@ class FormGenerator
 			$GLOBALS['APPLICATION']->AuthForm(Loc::getMessage("ACCESS_DENIED"));
 		}
 		
-		$this->fillSavingEntity();
-		
+		$entityTable = $this->entityClass->getEntity();
 		$entity = $this->getEntity();
+		$this->fillSavingEntity($entityTable, $entity, $this->request->getPostList());
+		
 		$obResult = $entity->save();
 		
 		$this->primaryKey = $entity->get($this->primaryCode);
 		
 		if ($obResult->isSuccess())
 		{
+			$this->saveTiedEntities();
 			$cacheTag = $this->entityClass->getCacheTag();
 			
 			if (! empty($cacheTag))
@@ -228,16 +249,15 @@ class FormGenerator
 		return $this->messages;
 	}
 	
-	protected function fillSavingEntity()
+	protected function fillSavingEntity($entityTable, $entity, $data)
 	{
-		$avaibledFields = $this->entityClass->getEntity()->getFields();
-		
-		$entity = $this->getEntity();
+		$avaibledFields = $entityTable->getFields();
 		foreach ($avaibledFields as $field)
 		{
 			$name = $field->getName();
-			$value = $this->request->getPost($name);
+			$value = isset($data[$name]) ? $data[$name] : null;
 			$editable = ($field->getParameter('bxmod_readonly') !== true and $field->getParameter('bxmod_hidden') !== true);
+			
 			if (! $editable or $value === null)
 				continue;
 			
@@ -258,19 +278,108 @@ class FormGenerator
 					$entity->set($field->getName(), $value);
 					break;
 				
+				case FieldTypeMask::REFERENCE:
+					$entity->set($name, ($field->getRefEntityName() . 'Table')::wakeUpObject($value));
+					break;
+				
 				case FieldTypeMask::ONE_TO_MANY:
 				case FieldTypeMask::MANY_TO_MANY:
 					if (! is_array($value))
 						$value = [$value];
 					
-					if ($this->primaryKey) $entity->removeAll($name);
+					if (reset($entity->primary))
+					{
+						$entity->removeAll($name);
+					}
+					
+					if ($field->getParameter('relation_view_type') === 'editor')
+					{
+						$remoteFieldName = $field->getRefField()->getName();
+						$refEntities = $this->fillRelationEntities($field, $value, [
+							$name => $entity,
+						]);
+						
+						$this->tieEntities($refEntities, $remoteFieldName, $entity);
+						
+						continue;
+					}
+					
 					foreach ($value as $ID)
 					{
 						$entity->addTo($name, ($field->getRefEntityName() . 'Table')::wakeUpObject($ID));
 					}
 					break;
+				
+				default:
+					throw new \Exception('Unsupported field data mask ' . $field->getTypeMask());
+					break;
 			}
 		}
+	}
+	
+	protected function tieEntities($refEntities, $fieldName, $entity)
+	{
+		if (! is_array($refEntities))
+			$refEntities = [$refEntities];
+		
+		foreach ($refEntities as $refEntity)
+		{
+			$this->tiedEntities[] = [
+				'target' => $refEntity,
+				'fieldName' => $fieldName,
+				'entity' => $entity,
+			];
+		}
+		
+		// $this->saveTiedEntities();
+	}
+	
+	/*
+	* 1. Сущность можно привязать только тогда, когда у неё есть первичный ключ.
+	* Если обновщяется сущность - сразу делаем привязку. Иначе после
+	* сохранения основной сущности
+	*
+	* 2. Сохранять привязку можно только после сохранения основной сущности,
+	* так как используется removeAll(), у основной сущности. В противном случае: отвязываем всё,
+	* привязяваем нужные сущности, сохраняем привязанные сущности (привязка есть), сохраняем
+	* основную сущность - привязка сбрасывается.
+	*/
+	protected function saveTiedEntities()
+	{
+		foreach ($this->tiedEntities as $key => $tiedEntity)
+		{
+			$primary = reset($tiedEntity['entity']->primary);
+			if (! empty($primary))
+			{
+				$tiedEntity['target']->set($tiedEntity['fieldName'], $tiedEntity['entity']);
+				$tiedEntity['target']->save();
+				unset($this->tiedEntities[$key]);
+			}
+		}
+	}
+	
+	protected function fillRelationEntities($field, $values, $parentEntity)
+	{
+		$refTable = $field->getRefEntityName() . 'Table';
+		
+		$result = [];
+		foreach ($values as $value)
+		{
+			if ($value['_primary'] > 0)
+			{
+				$refEntity = ($refTable)::wakeUpObject($value['_primary']);
+			}
+			else
+			{
+				$refEntity = ($refTable)::createObject();
+			}
+			
+			$this->fillSavingEntity(($refTable)::getEntity(), $refEntity, $value);
+			
+			$result[] = $refEntity;
+		}
+		
+		return $result;
 	}
 	
 	public function checkPermissions($moduleName, $needsPerm)

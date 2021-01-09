@@ -1,12 +1,12 @@
 <?php
 
-namespace MashinaMashina\Bxmod\Admin\Builders;
+namespace MashinaMashina\Bxmod\Admin\Form\Builders;
 
 use \MashinaMashina\Bxmod\Tools\Html;
 
 abstract class ScalarField extends Field
 {
-	public static function buildInput($field, $entity, $table)
+	public static function buildInput($field, $entity, $table, $tagData = [])
 	{
 		if ($field->getParameter('bxmod_readonly') === true)
 		{
@@ -14,7 +14,7 @@ abstract class ScalarField extends Field
 		}
 		else
 		{
-			return Html::buildSimpleTag('input', [
+			return Html::buildSimpleTag('input', $tagData + [
 				'name' => $field->getName(),
 				'value' => $entity[$field->getName()],
 				'type' => 'text',

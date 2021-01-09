@@ -1,12 +1,12 @@
 <?php
 
-namespace MashinaMashina\Bxmod\Admin\Builders;
+namespace MashinaMashina\Bxmod\Admin\Form\Builders;
 
 use \MashinaMashina\Bxmod\Tools\Html;
 
 class BooleanField extends ScalarField
 {
-	public static function buildInput($field, $entity, $table)
+	public static function buildInput($field, $entity, $table, $tagData = [])
 	{
 		$checked = ($tagData['value'] ? 'checked' : '');
 		
@@ -16,7 +16,7 @@ class BooleanField extends ScalarField
 			'value' => 'N',
 		]);
 		
-		return $str . Html::buildSimpleTag('input', [
+		return $str . Html::buildSimpleTag('input', $tagData + [
 			'name' => $field->getName(),
 			'type' => 'checkbox',
 			'value' => 'Y',

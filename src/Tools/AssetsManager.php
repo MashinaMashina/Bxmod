@@ -9,13 +9,18 @@ class AssetsManager
 		
 		$arJsConfig = array(
 			'chosen' => array( 
-				'js' => $dir .'/assets/lib/chosen/chosen.jquery.min.js', 
-				'css' => $dir .'/assets/lib/chosen/chosen.min.css', 
+				'js' => $dir .'/assets/chosen/chosen.jquery.min.js', 
+				'css' => $dir .'/assets/chosen/chosen.min.css', 
 				'rel' => array('jquery2'), 
 			),
 			'autocomplete' => array( 
-				'js' => $dir .'/assets/lib/autocomplete/jquery-ui.min.js', 
-				'css' => $dir .'/assets/lib/autocomplete/jquery-ui.min.css', 
+				'js' => $dir .'/assets/autocomplete/jquery-ui.min.js', 
+				'css' => $dir .'/assets/autocomplete/jquery-ui.min.css', 
+				'rel' => array('jquery2'), 
+			),
+			'bxmod_admin_form' => array( 
+				'js' => $dir .'/assets/bxmod/script.js',
+				'css' => $dir .'/assets/bxmod/style.css', 				
 				'rel' => array('jquery2'), 
 			),
 		); 

@@ -1,12 +1,12 @@
 <?php
 
-namespace MashinaMashina\Bxmod\Admin\Builders;
+namespace MashinaMashina\Bxmod\Admin\Form\Builders;
 
 use \MashinaMashina\Bxmod\Tools\Html;
 
 class EnumField extends ScalarField
 {
-	public static function buildInput($field, $entity, $table)
+	public static function buildInput($field, $entity, $table, $tagData = [])
 	{
 		$options = '';
 		foreach ($field->getParameter('values') as $value)
@@ -19,7 +19,7 @@ class EnumField extends ScalarField
 			], $value);
 		}
 		
-		return Html::buildTag('select', [
+		return Html::buildTag('select', $tagData + [
 			'name' => $field->getName(),
 		], $options);
 	}
