@@ -6,40 +6,27 @@ use \Bitrix\Main\Type\Date;
 use \Bitrix\Main\Application;
 use \Bitrix\Main\ORM\Fields\FieldTypeMask;
 use \Bitrix\Main\ORM\Fields\Relations\Relation;
-use \MashinaMashina\Bxmod\Tools\Html;
-use \MashinaMashina\Bxmod\Tools\AssetsManager;
+use \MashinaMashina\Bxmod\Admin\BaseGenerator;
 use \MashinaMashina\Bxmod\Orm\Entity\DataManager;
 
-class Generator
+class Generator extends BaseGenerator
 {
-	protected $entityClass;
-	protected $entity;
-	protected $request;
 	protected $primaryKey;
-	protected $messages;
-	protected $formLink;
-	protected $listLink;
 	protected $primaryCode = 'ID';
 	protected $topMenu = [];
 	protected $tabs = [];
 	protected $tiedEntities = [];
 	
-	const MESS_ERROR = 'ERROR';
-	const MESS_OK = 'OK';
-	
 	public function __construct(DataManager $entityClass)
 	{
-		$this->entityClass = $entityClass;
-		$this->request = Application::getInstance()->getContext()->getRequest();
-		
-		AssetsManager::init();
+		parent::__construct($entityClass);
 		\CJSCore::Init(['bxmod_admin_form']);
 	}
 	
-	public function initForm($formLink, $listLink)
+	public function init($formLink, $listLink)
 	{
-		$this->formLink = $formLink;
-		$this->listLink = $listLink;
+		parent::init($formLink, $listLink);
+		
 		$this->primaryKey = (int) $this->request->getQuery($this->primaryCode);
 	}
 	
@@ -50,12 +37,40 @@ class Generator
 		return $this->primaryKey;
 	}
 	
-	public function generateForm()
+	public function generate()
+	{
+		
+	}
+	
+	public function display()
 	{
 		$this->executeForm();
 		
+		$topMenu[] = [
+			'TEXT' => $this->getLangMessage('entity_list'),
+			'TITLE' => $this->getLangMessage('entity_list'),
+			'LINK' => $this->listLink(),
+			'ICON' => 'btn_list',
+		];
+
+		if($this->getPrimaryKey() > 0)
+		{
+			$delLink = $this->listLink([
+				'ID' => $ID,
+				'action' => 'delete',
+				'sessid' => bitrix_sessid(),
+			]);
+			$topMenu[] = ["SEPARATOR"=>"Y"];
+			$topMenu[] = [
+				'TEXT' => $this->getLangMessage('entity_delete'),
+				'TITLE' => $this->getLangMessage('entity_delete'),
+				'LINK' => 'javascript:if(confirm("'.Loc::GetMessage('region_delete_conf').'"))window.location="'. $delLink . '";',
+				'ICON' => 'btn_delete',
+			];
+		}
+		
 		$tabControl = new \CAdminTabControl("tabControl", $this->getTabs());
-		$context = new \CAdminContextMenu($this->getTopMenuItems());
+		$context = new \CAdminContextMenu($topMenu);
 		
 		ob_start();
 		$context->Show();
@@ -207,48 +222,6 @@ class Generator
 		}
 	}
 	
-	public function formLink($data = [])
-	{
-		$data['lang'] = LANG;
-		
-		return $this->formLink . '?' . http_build_query($data);
-	}
-	
-	public function goToForm($data = [])
-	{
-		LocalRedirect($this->formLink($data));
-		exit;
-	}
-	
-	public function listLink($data = [])
-	{
-		$data['lang'] = LANG;
-		
-		return $this->listLink . '?' . http_build_query($data);
-	}
-	
-	public function goToList($data = [])
-	{
-		LocalRedirect($this->listLink($data));
-		exit;
-	}
-	
-	/*
-	 *	@param string $type in list: [FormGenerator::MESS_OK, FormGenerator::MESS_OK]
-	 */
-	protected function addMessage($message, $type = '')
-	{
-		$this->messages[] = new \CAdminMessage([
-			'TYPE' => $type,
-			'MESSAGE' => $message,
-		]);
-	}
-	
-	public function getMessages()
-	{
-		return $this->messages;
-	}
-	
 	protected function fillSavingEntity($entityTable, $entity, $data)
 	{
 		$avaibledFields = $entityTable->getFields();
@@ -382,14 +355,6 @@ class Generator
 		return $result;
 	}
 	
-	public function checkPermissions($moduleName, $needsPerm)
-	{
-		global $APPLICATION;
-		
-		if ($APPLICATION->GetGroupRight($moduleName) < $needsPerm)
-			$APPLICATION->AuthForm(Loc::getMessage("ACCESS_DENIED"));
-	}
-	
 	/*
 	 * @param array $data - data with keys: TEXT, LINK, ICON[btn_list|btn_delete]
 	 */
@@ -419,7 +384,7 @@ class Generator
 		}
 		
 		return [[
-			"TAB" => '-',
+			'TAB' => $this->getLangMessage('entity'),
 		]];
 	}
 	
