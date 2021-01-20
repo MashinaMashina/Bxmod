@@ -1,8 +1,8 @@
 <?php
-namespace MashinaMashina\Bxmod\ORM\Fields\Relations;
+namespace MashinaMashina\Bxmod\Orm\Fields\Relations;
 
-use \Bitrix\Main\ORM\Fields\Relations;
-use \MashinaMashina\Bxmod\ORM\Fields\ParametersTrait;
+use \Bitrix\Main\Orm\Fields\Relations;
+use \MashinaMashina\Bxmod\Orm\Fields\ParametersTrait;
 
 class Reference extends Relations\Reference
 {

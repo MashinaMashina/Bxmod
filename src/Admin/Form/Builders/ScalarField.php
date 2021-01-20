@@ -16,7 +16,7 @@ abstract class ScalarField extends Field
 		{
 			return Html::buildSimpleTag('input', $tagData + [
 				'name' => $field->getName(),
-				'value' => $entity[$field->getName()],
+				'value' => $entity->get($field->getName()),
 				'type' => 'text',
 			]);
 		}

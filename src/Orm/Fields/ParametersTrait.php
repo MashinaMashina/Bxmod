@@ -5,7 +5,7 @@
  * Добавим функционал в более старые битриксы.
  */
 
-namespace MashinaMashina\Bxmod\ORM\Fields;
+namespace MashinaMashina\Bxmod\Orm\Fields;
 
 trait ParametersTrait
 {
@@ -14,7 +14,7 @@ trait ParametersTrait
 	{
 		if (method_exists(get_parent_class($this), 'setParameter'))
 		{
-			return $this->setParameter($name, $value);
+			return parent::setParameter($name, $value);
 		}
 		
 		$this->initialParameters[$name] = $value;
@@ -26,7 +26,7 @@ trait ParametersTrait
 	{
 		if (method_exists(get_parent_class($this), 'getParameter'))
 		{
-			return $this->getParameter($name);
+			return parent::getParameter($name);
 		}
 		
 		return $this->initialParameters[$name];
@@ -36,7 +36,7 @@ trait ParametersTrait
 	{
 		if (method_exists(get_parent_class($this), 'hasParameter'))
 		{
-			return $this->hasParameter($name);
+			return parent::hasParameter($name);
 		}
 		
 		return array_key_exists($name, $this->initialParameters);

@@ -12,6 +12,17 @@ class DataManager extends Entity\DataManager
 	
 	public static function getDbIndexes()
 	{
-		return [];
+		$fields = static::getMap();
+		
+		$indexes = [];
+		foreach ($fields as $field)
+		{
+			if ($field->getParameter('bxmod_index') === true)
+			{
+				$indexes[] = $field->getName();
+			}
+		}
+		
+		return $indexes;
 	}
 }

@@ -36,7 +36,7 @@ abstract class Relation extends Field
 	
 	public static function buildInput($field, $entity, $table, $tagData = [])
 	{
-		switch ($field->getParameter('relation_view_type'))
+		switch ($field->getParameter('bxmod_relation_view_type'))
 		{
 			case 'editor':
 				return self::buildEditor($field, $entity, $table, $tagData);
@@ -130,9 +130,6 @@ abstract class Relation extends Field
 			$primarys[] = $val['ID'];
 		}
 		
-		// var_dump($primarys, $table->getEntity()->getPrimary());
-		// exit;
-		
 		$allElements = $field->getAllReferences();
 		
 		if (! $field->getParameter('required'))
@@ -190,7 +187,12 @@ abstract class Relation extends Field
 		
 		$fields = $refEntity->getFields();
 		
-		$result = '<table class="internal" style="width:100%" id="'.$editorId.'"><tbody>';
+		$result = Html::buildSimpleTag('input', [ // триггер поля на случай, если все записи удалены.
+			'type' => 'hidden',
+			'name' => $field->getName() . "[0][_primary]",
+			'value' => '0',
+		]);
+		$result .= '<table class="internal" style="width:100%" id="'.$editorId.'"><tbody>';
 		
 		/* head */
 		$result .= '<tr class="heading">';
@@ -253,7 +255,7 @@ abstract class Relation extends Field
 			if ($fieldChild->getParameter('bxmod_hidden') === true)
 				continue;
 			
-			$class = str_replace('MashinaMashina\Bxmod\ORM\Fields', 'MashinaMashina\Bxmod\Admin\Form\Builders', get_class($fieldChild));
+			$class = str_replace('MashinaMashina\Bxmod\Orm\Fields', 'MashinaMashina\Bxmod\Admin\Form\Builders', get_class($fieldChild));
 			
 			$name = $fieldChild->getName();
 			$childName = $field->getName() . "[{$n}][{$name}]";

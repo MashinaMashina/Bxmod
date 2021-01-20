@@ -1,5 +1,5 @@
 <?php
-namespace MashinaMashina\Bxmod\ORM\Fields\Relations;
+namespace MashinaMashina\Bxmod\Orm\Fields\Relations;
 
 use \Bitrix\Main\Entity\Query;
 

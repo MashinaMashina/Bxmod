@@ -8,7 +8,7 @@ class BooleanField extends ScalarField
 {
 	public static function buildInput($field, $entity, $table, $tagData = [])
 	{
-		$checked = ($tagData['value'] ? 'checked' : '');
+		$checked = ($entity->get($field->getName()) ? 'checked' : '');
 		
 		$str = Html::buildSimpleTag('input', [
 			'name' => $field->getName(),

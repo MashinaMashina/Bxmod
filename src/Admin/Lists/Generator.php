@@ -78,21 +78,34 @@ class Generator extends BaseGenerator
 	
 	protected function executeGroupActions()
 	{
-		if ($this->adminList->GroupAction() === false)
+		$arIds = $this->adminList->GroupAction();
+		if ($arIds === false)
 		{
 			return;
 		}
 		
-		$action = $this->request->getPost('action');
+		$action = $this->request->getQuery('action');
+		$target = $this->request->getQuery('action_target');
+		
+		if (empty($action))
+			$action = $this->request->getQuery('action_button');
+		
+		$filter = [];
+		if ($target !== 'selected')
+			$filter[$this->primaryCode] = $arIds;
 		
 		$collection = $this->entityClass::getList([
 			'select' => [$this->primaryCode],
+			'filter' => $filter,
 		])->fetchCollection();
 		
 		switch ($action)
 		{
 			case 'delete':
-				$collection->remove();
+				foreach ($collection as $entity)
+					$entity->delete();
+				
+				return;
 				break;
 			
 			case 'activate':
@@ -151,7 +164,7 @@ class Generator extends BaseGenerator
 		$arActions[] = [
 			'ICON' => 'delete',
 			'TEXT' => $this->getLangMessage('entity_delete'),
-			'ACTION' => 'if(confirm("'.Loc::GetMessage('region_delete_conf').'")) '.$this->adminList->ActionDoGroup($arRes['ID'], 'delete')
+			'ACTION' => 'if(confirm("'.$this->getLangMessage('entity_delete').'?")) '.$this->adminList->ActionDoGroup($id, 'delete')
 		];
 
 		// применим контекстное меню к строке

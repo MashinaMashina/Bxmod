@@ -39,13 +39,11 @@ class Generator extends BaseGenerator
 	
 	public function generate()
 	{
-		
+		$this->executeForm();
 	}
 	
 	public function display()
-	{
-		$this->executeForm();
-		
+	{	
 		$topMenu[] = [
 			'TEXT' => $this->getLangMessage('entity_list'),
 			'TITLE' => $this->getLangMessage('entity_list'),
@@ -56,7 +54,7 @@ class Generator extends BaseGenerator
 		if($this->getPrimaryKey() > 0)
 		{
 			$delLink = $this->listLink([
-				'ID' => $ID,
+				'ID' => $this->getPrimaryKey(),
 				'action' => 'delete',
 				'sessid' => bitrix_sessid(),
 			]);
@@ -64,7 +62,7 @@ class Generator extends BaseGenerator
 			$topMenu[] = [
 				'TEXT' => $this->getLangMessage('entity_delete'),
 				'TITLE' => $this->getLangMessage('entity_delete'),
-				'LINK' => 'javascript:if(confirm("'.Loc::GetMessage('region_delete_conf').'"))window.location="'. $delLink . '";',
+				'LINK' => 'javascript:if(confirm("'.$this->getLangMessage('entity_delete').'?"))window.location="'. $delLink . '";',
 				'ICON' => 'btn_delete',
 			];
 		}
@@ -133,7 +131,7 @@ class Generator extends BaseGenerator
 		if ($field->getParameter('bxmod_hidden') === true)
 			return;
 		
-		$class = str_replace('MashinaMashina\Bxmod\ORM\Fields', 'MashinaMashina\Bxmod\Admin\Form\Builders', get_class($field));
+		$class = str_replace('MashinaMashina\Bxmod\Orm\Fields', 'MashinaMashina\Bxmod\Admin\Form\Builders', get_class($field));
 		
 		echo ($class)::build($field, $this->getEntity(), $this->entityClass);
 	}
@@ -247,7 +245,6 @@ class Generator extends BaseGenerator
 							$value = Date::createFromTimestamp(strtotime($value));
 							break;
 					}
-					
 					$entity->set($field->getName(), $value);
 					break;
 				
@@ -260,13 +257,24 @@ class Generator extends BaseGenerator
 					if (! is_array($value))
 						$value = [$value];
 					
+					$collection = [];
 					if (reset($entity->primary))
 					{
-						$entity->removeAll($name);
+						$collection = $entity->get($name);
 					}
 					
-					if ($field->getParameter('relation_view_type') === 'editor')
+					if ($field->getParameter('bxmod_relation_view_type') === 'editor')
 					{
+						$primaries = array_column($value, '_primary');
+						foreach ($collection as $collectionEntity)
+						{
+							$primary = reset($collectionEntity->primary);
+							if (! in_array($primary, $primaries))
+							{
+								$entity->removeFrom($name, $collectionEntity);
+							}
+						}
+						
 						$remoteFieldName = $field->getRefField()->getName();
 						$refEntities = $this->fillRelationEntities($field, $value, [
 							$name => $entity,
@@ -276,11 +284,28 @@ class Generator extends BaseGenerator
 						
 						continue;
 					}
-					
-					foreach ($value as $ID)
+					else
 					{
-						$entity->addTo($name, ($field->getRefEntityName() . 'Table')::wakeUpObject($ID));
+						$primaries = [];
+						foreach ($collection as $collectionEntity)
+						{
+							$primary = reset($collectionEntity->primary);
+							$primaries[] = $primary;
+							if (! in_array($primary, $value))
+							{
+								$collection->remove($collectionEntity);
+							}
+						}
+						
+						foreach ($value as $primary)
+						{
+							if (! in_array($primary, $primaries))
+							{
+								$entity->addTo($name, ($field->getRefEntityName() . 'Table')::wakeUpObject($primary));
+							}
+						}
 					}
+					
 					break;
 				
 				default:

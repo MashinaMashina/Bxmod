@@ -1,10 +1,15 @@
 <?php
 
-namespace MashinaMashina\Bxmod\ORM\Fields;
+namespace MashinaMashina\Bxmod\Orm\Fields;
 
-use \Bitrix\Main\ORM\Fields\EnumField;
+use \Bitrix\Main\Orm\Fields\EnumField;
 
 class EnumField extends Fields\EnumField
 {
 	use ParametersTrait;
+	
+	public function getDataType()
+	{
+		return 'enum';
+	}
 }

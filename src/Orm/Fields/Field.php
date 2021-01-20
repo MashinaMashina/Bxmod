@@ -1,8 +1,8 @@
 <?php
 
-namespace MashinaMashina\Bxmod\ORM\Fields;
+namespace MashinaMashina\Bxmod\Orm\Fields;
 
-use \Bitrix\Main\ORM\Fields;
+use \Bitrix\Main\Orm\Fields;
 
 class Field extends Fields\Field
 {
