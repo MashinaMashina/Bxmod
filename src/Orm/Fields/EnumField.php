@@ -6,7 +6,7 @@ use \Bitrix\Main\Orm\Fields\EnumField;
 
 class EnumField extends Fields\EnumField
 {
-	use ParametersTrait;
+	use ParametersTrait, FieldTrait;
 	
 	public function getDataType()
 	{

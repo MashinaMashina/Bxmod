@@ -6,5 +6,5 @@ use \Bitrix\Main\Orm\Fields;
 
 class UserTypeField extends Fields\UserTypeField
 {
-	use ParametersTrait;
+	use ParametersTrait, FieldTrait;
 }

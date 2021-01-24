@@ -6,7 +6,7 @@ use \Bitrix\Main\Orm\Fields;
 
 class BooleanField extends Fields\BooleanField
 {
-	use ParametersTrait;
+	use ParametersTrait, FieldTrait;
 	
 	public function getDataType()
 	{

@@ -6,5 +6,5 @@ use \Bitrix\Main\Orm\Fields;
 
 class Field extends Fields\Field
 {
-	use ParametersTrait;
+	use ParametersTrait, FieldTrait;
 }

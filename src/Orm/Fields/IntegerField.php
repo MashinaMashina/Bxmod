@@ -6,7 +6,7 @@ use \Bitrix\Main\Orm\Fields;
 
 class IntegerField extends Fields\IntegerField
 {
-	use ParametersTrait;
+	use ParametersTrait, FieldTrait;
 	
 	public function getDataType()
 	{

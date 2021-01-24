@@ -6,6 +6,6 @@ use \Bitrix\Main\Orm\Fields;
 
 class ExpressionField extends Fields\ExpressionField
 {
-	use ParametersTrait;
+	use ParametersTrait, FieldTrait;
 }
 

@@ -6,5 +6,5 @@ use \Bitrix\Main\Orm\Fields;
 
 class ArrayField extends Fields\ArrayField
 {
-	use ParametersTrait;
+	use ParametersTrait, FieldTrait;
 }

@@ -1,8 +1,8 @@
 <?php
 
-namespace MashinaMashina\Bxmod\Admin\Form\Builders\Relations;
+namespace MashinaMashina\Bxmod\Admin\Form\Editors\Relations;
 
-use \MashinaMashina\Bxmod\Admin\Form\Builders\Field;
+use \MashinaMashina\Bxmod\Admin\Form\Editors\Field;
 use \MashinaMashina\Bxmod\Tools\Html;
 use \MashinaMashina\Bxmod\ORM\Fields\Relations;
 
@@ -255,7 +255,7 @@ abstract class Relation extends Field
 			if ($fieldChild->getParameter('bxmod_hidden') === true)
 				continue;
 			
-			$class = str_replace('MashinaMashina\Bxmod\Orm\Fields', 'MashinaMashina\Bxmod\Admin\Form\Builders', get_class($fieldChild));
+			$class = str_replace('MashinaMashina\Bxmod\Orm\Fields', 'MashinaMashina\Bxmod\Admin\Form\Editors', get_class($fieldChild));
 			
 			$name = $fieldChild->getName();
 			$childName = $field->getName() . "[{$n}][{$name}]";

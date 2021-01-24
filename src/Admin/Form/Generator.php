@@ -2,7 +2,6 @@
 namespace MashinaMashina\Bxmod\Admin\Form;
 
 use \Bitrix\Main\Localization\Loc;
-use \Bitrix\Main\Type\Date;
 use \Bitrix\Main\Application;
 use \Bitrix\Main\ORM\Fields\FieldTypeMask;
 use \Bitrix\Main\ORM\Fields\Relations\Relation;
@@ -131,9 +130,7 @@ class Generator extends BaseGenerator
 		if ($field->getParameter('bxmod_hidden') === true)
 			return;
 		
-		$class = str_replace('MashinaMashina\Bxmod\Orm\Fields', 'MashinaMashina\Bxmod\Admin\Form\Builders', get_class($field));
-		
-		echo ($class)::build($field, $this->getEntity(), $this->entityClass);
+		echo ($field->getEditorClass())::build($field, $this->getEntity(), $this->entityClass);
 	}
 	
 	protected function getEntity()
@@ -189,7 +186,7 @@ class Generator extends BaseGenerator
 		
 		$entityTable = $this->entityClass->getEntity();
 		$entity = $this->getEntity();
-		$this->fillSavingEntity($entityTable, $entity, $this->request->getPostList());
+		Fillers\Iterator::fillEntity($entityTable, $entity, $this->request->getPostList());
 		
 		$obResult = $entity->save();
 		
@@ -222,97 +219,7 @@ class Generator extends BaseGenerator
 	
 	protected function fillSavingEntity($entityTable, $entity, $data)
 	{
-		$avaibledFields = $entityTable->getFields();
-		foreach ($avaibledFields as $field)
-		{
-			$name = $field->getName();
-			$value = isset($data[$name]) ? $data[$name] : null;
-			$editable = ($field->getParameter('bxmod_readonly') !== true and $field->getParameter('bxmod_hidden') !== true);
-			
-			if (! $editable or $value === null)
-				continue;
-			
-			switch ($field->getTypeMask())
-			{
-				case FieldTypeMask::SCALAR:
-					switch ($field->getDataType())
-					{
-						case 'boolean':
-							$value = ($value === 'Y' ? true : false);
-							break;
-						
-						case 'date':
-							$value = Date::createFromTimestamp(strtotime($value));
-							break;
-					}
-					$entity->set($field->getName(), $value);
-					break;
-				
-				case FieldTypeMask::REFERENCE:
-					$entity->set($name, ($field->getRefEntityName() . 'Table')::wakeUpObject($value));
-					break;
-				
-				case FieldTypeMask::ONE_TO_MANY:
-				case FieldTypeMask::MANY_TO_MANY:
-					if (! is_array($value))
-						$value = [$value];
-					
-					$collection = [];
-					if (reset($entity->primary))
-					{
-						$collection = $entity->get($name);
-					}
-					
-					if ($field->getParameter('bxmod_relation_view_type') === 'editor')
-					{
-						$primaries = array_column($value, '_primary');
-						foreach ($collection as $collectionEntity)
-						{
-							$primary = reset($collectionEntity->primary);
-							if (! in_array($primary, $primaries))
-							{
-								$entity->removeFrom($name, $collectionEntity);
-							}
-						}
-						
-						$remoteFieldName = $field->getRefField()->getName();
-						$refEntities = $this->fillRelationEntities($field, $value, [
-							$name => $entity,
-						]);
-						
-						$this->tieEntities($refEntities, $remoteFieldName, $entity);
-						
-						continue;
-					}
-					else
-					{
-						$primaries = [];
-						foreach ($collection as $collectionEntity)
-						{
-							$primary = reset($collectionEntity->primary);
-							$primaries[] = $primary;
-							if (! in_array($primary, $value))
-							{
-								$collection->remove($collectionEntity);
-							}
-						}
-						
-						foreach ($value as $primary)
-						{
-							if (! in_array($primary, $primaries))
-							{
-								$entity->addTo($name, ($field->getRefEntityName() . 'Table')::wakeUpObject($primary));
-							}
-						}
-					}
-					
-					break;
-				
-				default:
-					throw new \Exception('Unsupported field data mask ' . $field->getTypeMask());
-					break;
-			}
-		}
+		
 	}
 	
 	protected function tieEntities($refEntities, $fieldName, $entity)
@@ -354,30 +261,6 @@ class Generator extends BaseGenerator
 				unset($this->tiedEntities[$key]);
 			}
 		}
-	}
-	
-	protected function fillRelationEntities($field, $values, $parentEntity)
-	{
-		$refTable = $field->getRefEntityName() . 'Table';
-		
-		$result = [];
-		foreach ($values as $value)
-		{
-			if ($value['_primary'] > 0)
-			{
-				$refEntity = ($refTable)::wakeUpObject($value['_primary']);
-			}
-			else
-			{
-				$refEntity = ($refTable)::createObject();
-			}
-			
-			$this->fillSavingEntity(($refTable)::getEntity(), $refEntity, $value);
-			
-			$result[] = $refEntity;
-		}
-		
-		return $result;
 	}
 	
 	/*

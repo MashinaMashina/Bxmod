@@ -6,7 +6,7 @@ use \Bitrix\Main\Orm\Fields;
 
 class StringField extends Fields\StringField
 {
-	use ParametersTrait;
+	use ParametersTrait, FieldTrait;
 	
 	public function getDataType()
 	{

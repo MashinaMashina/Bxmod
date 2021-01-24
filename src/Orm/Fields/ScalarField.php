@@ -6,5 +6,5 @@ use \Bitrix\Main\Orm\Fields;
 
 class ScalarField extends Fields\ScalarField
 {
-	use ParametersTrait;
+	use ParametersTrait, FieldTrait;
 }

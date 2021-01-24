@@ -6,5 +6,5 @@ use \Bitrix\Main\Orm\Fields;
 
 class CryptoField extends Fields\CryptoField
 {
-	use ParametersTrait;
+	use ParametersTrait, FieldTrait;
 }
