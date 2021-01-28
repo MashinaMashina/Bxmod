@@ -6,6 +6,8 @@ use \MashinaMashina\Bxmod\Admin\Form\Fillers;
 
 class OneToMany extends Relation
 {
+	protected static $lazySavingEntities = [];
+	
 	public static function fillEntity($entity, $field, $value)
 	{
 		if (! is_array($value))
@@ -14,10 +16,8 @@ class OneToMany extends Relation
 		$collection = [];
 		if (reset($entity->primary))
 		{
-			$collection = $entity->get($name);
+			$collection = $entity->get($field->getName());
 		}
-		
-		static::fillEditorType($entity, $field, $value, $collection);
 		
 		if ($field->getParameter('bxmod_relation_view_type') === 'editor')
 		{
@@ -39,7 +39,7 @@ class OneToMany extends Relation
 		{
 			if (! in_array($primary, $primaries))
 			{
-				$entity->addTo($name, ($field->getRefEntityName() . 'Table')::wakeUpObject($primary));
+				$entity->addTo($field->getName(), ($field->getRefEntityName() . 'Table')::wakeUpObject($primary));
 			}
 		}
 	}
@@ -52,16 +52,81 @@ class OneToMany extends Relation
 			$primary = reset($collectionEntity->primary);
 			if (! in_array($primary, $primaries))
 			{
-				$entity->removeFrom($name, $collectionEntity);
+				$entity->removeFrom($field->getName(), $collectionEntity);
 			}
 		}
 		
 		$remoteFieldName = $field->getRefField()->getName();
-		$refEntities = Fillers\Iterator::fillEntity($field, $value, [
-			$name => $entity,
+		$refEntities = static::fillRelationEntities($field, $value, [
+			$field->getName() => $entity,
 		]);
 		
-		// $this->tieEntities($refEntities, $remoteFieldName, $entity);
+		static::saveReferences($refEntities, $remoteFieldName, $entity);
+	}
+	
+	protected static function saveReferences($refEntities, $remoteFieldName, $entity)
+	{
+		if (! is_array($refEntities))
+			$refEntities = [$refEntities];
+		
+		foreach ($refEntities as $refEntity)
+		{
+			static::$lazySavingEntities[] = [
+				'target' => $refEntity,
+				'fieldName' => $remoteFieldName,
+				'entity' => $entity,
+			];
+		}
+		
+		$primary = reset($entity->primary);
+		
+		/*
+		 * Если сущность еще не имеет ID, то к ней
+		 * нельзя привязывать посторонние сущности.
+		 * Дожидаемся сохранения
+		 */
+		if (! empty($primary))
+		{
+			static::lazySaveReferences();
+		}
+		else
+		{
+			static::registerSaveCallback($entity, 'onAfterAdd', get_called_class(), 'lazySaveReferences');
+		}
+	}
+	
+	protected static function registerSaveCallback($entity, $event, $toClass, $toFunction)
+	{
+		static $hasEvent;
+		
+		if ($hasEvent)
+		{
+			return;
+		}
+		
+		$hasEvent = true;
+		
+		$sysEntity = $entity->sysGetEntity();
+		$class = $sysEntity->getFullName();
+		$module = $sysEntity->getModule();
+		
+		$eventManager = \Bitrix\Main\EventManager::getInstance();
+		$eventManager->addEventHandler($module, $class . '::' . $event, [$toClass, $toFunction]);
+	}
+	
+	public static function lazySaveReferences()
+	{
+		foreach (static::$lazySavingEntities as $key => $data)
+		{
+			$primary = reset($data['entity']->primary);
+			if (! empty($primary))
+			{
+				$data['target']->set($data['fieldName'], $data['entity']);
+				$data['target']->save();
+				
+				unset(static::$lazySavingEntities[$key]);
+			}
+		}
 	}
 	
 	protected function fillRelationEntities($field, $values, $parentEntity)
@@ -71,6 +136,11 @@ class OneToMany extends Relation
 		$result = [];
 		foreach ($values as $value)
 		{
+			if ($value['_primary'] === 'none')
+			{
+				continue;
+			}
+			
 			if ($value['_primary'] > 0)
 			{
 				$refEntity = ($refTable)::wakeUpObject($value['_primary']);
@@ -80,7 +150,7 @@ class OneToMany extends Relation
 				$refEntity = ($refTable)::createObject();
 			}
 			
-			$this->fillSavingEntity(($refTable)::getEntity(), $refEntity, $value);
+			Fillers\Iterator::fillEntity(($refTable)::getEntity(), $refEntity, $value);
 			
 			$result[] = $refEntity;
 		}

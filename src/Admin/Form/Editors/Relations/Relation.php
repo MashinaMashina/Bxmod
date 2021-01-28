@@ -2,13 +2,15 @@
 
 namespace MashinaMashina\Bxmod\Admin\Form\Editors\Relations;
 
+use \Bitrix\Main\ORM\Objectify\EntityObject;
+use \Bitrix\Main\ORM\Fields;
 use \MashinaMashina\Bxmod\Admin\Form\Editors\Field;
 use \MashinaMashina\Bxmod\Tools\Html;
 use \MashinaMashina\Bxmod\ORM\Fields\Relations;
 
 abstract class Relation extends Field
 {
-	public static function build($field, $entity, $table, $tagData = [])
+	public static function build(Fields\Field $field, EntityObject $entity, $table, $tagData = [])
 	{
 		$fieldName = htmlspecialcharsbx($field->getTitle());
 		
@@ -17,8 +19,14 @@ abstract class Relation extends Field
 			$fieldName = '<b>' . $fieldName . '</b>'; 
 		}
 		
-		$result = '<tr><td colspan="2">';
+		$twoColumns = true;
+		if ($field->getParameter('bxmod_relation_view_type') === 'editor')
+			$twoColumns = false;
+		
+		$result = '<tr>';
+		$result .= $twoColumns ? '<td>' : '<td colspan="2">';
 		$result .= $fieldName;
+		$result .= $twoColumns ? '</td><td>' : '';
 		
 		if ($field->getParameter('bxmod_readonly') === true)
 		{
@@ -34,7 +42,7 @@ abstract class Relation extends Field
 		return $result;
 	}
 	
-	public static function buildInput($field, $entity, $table, $tagData = [])
+	public static function buildInput(Fields\Field $field, EntityObject $entity, $table, $tagData = [])
 	{
 		switch ($field->getParameter('bxmod_relation_view_type'))
 		{
@@ -190,7 +198,7 @@ abstract class Relation extends Field
 		$result = Html::buildSimpleTag('input', [ // триггер поля на случай, если все записи удалены.
 			'type' => 'hidden',
 			'name' => $field->getName() . "[0][_primary]",
-			'value' => '0',
+			'value' => 'none',
 		]);
 		$result .= '<table class="internal" style="width:100%" id="'.$editorId.'"><tbody>';
 		

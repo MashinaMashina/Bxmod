@@ -3,14 +3,16 @@
 namespace MashinaMashina\Bxmod\Admin\Form\Editors;
 
 use \MashinaMashina\Bxmod\Tools\Html;
+use \Bitrix\Main\ORM\Objectify\EntityObject;
+use \Bitrix\Main\ORM\Fields;
 
 class DateField extends ScalarField
 {
-	public static function buildInput($field, $entity, $table)
+	public static function buildInput(Fields\Field $field, EntityObject $entity, $table, $tagData = [])
 	{
 		\CJSCore::Init(['jquery', 'date']);
 		
-		return Html::buildSimpleTag('input', [
+		return Html::buildSimpleTag('input', $tagData + [
 			'name' => $field->getName(),
 			'value' => $entity[$field->getName()],
 			'type' => 'text',

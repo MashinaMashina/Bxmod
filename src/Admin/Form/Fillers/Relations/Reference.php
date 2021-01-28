@@ -6,7 +6,7 @@ class Reference extends Relation
 {
 	public static function fillEntity($entity, $field, $value)
 	{
-		$entity->set($name, ($field->getRefEntityName() . 'Table')::wakeUpObject($value));
+		$entity->set($field->getName(), ($field->getRefEntityName() . 'Table')::wakeUpObject($value));
 	}
 }
 

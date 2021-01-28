@@ -2,10 +2,18 @@
 
 namespace MashinaMashina\Bxmod\Admin\Form\Editors;
 
+use \Bitrix\Main\ORM\Objectify\EntityObject;
+use \Bitrix\Main\ORM\Fields;
+
 abstract class Field
 {
-	public static function build($field, $entity, $table, $tagData = [])
+	public static function build(Fields\Field $field, EntityObject $entity, $table, $tagData = [])
 	{
+		if ($field->getParameter('bxmod_readonly') === true and is_null($entity[$field->getName()]))
+		{
+			return '';
+		}
+		
 		$fieldName = htmlspecialcharsbx($field->getTitle());
 		
 		if ($field->getParameter('required'))
@@ -22,5 +30,5 @@ abstract class Field
 		return $result;
 	}
 	
-	abstract public static function buildInput($field, $entity, $table, $tagData = []);
+	abstract public static function buildInput(Fields\Field $field, EntityObject $entity, $table, $tagData = []);
 }

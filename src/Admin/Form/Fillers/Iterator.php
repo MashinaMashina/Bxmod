@@ -2,12 +2,13 @@
 
 namespace MashinaMashina\Bxmod\Admin\Form\Fillers;
 
+use \Bitrix\Main\ORM\Entity;
+use \Bitrix\Main\ORM\Objectify\EntityObject;
+
 class Iterator
 {
-	public static function fillEntity($entityTable, $entity, array $data)
+	public static function fillEntity(Entity $entityTable, EntityObject $entity, $data)
 	{
-		var_dump(get_class($entityTable), get_class($entity));
-		exit;
 		$avaibledFields = $entityTable->getFields();
 		foreach ($avaibledFields as $field)
 		{

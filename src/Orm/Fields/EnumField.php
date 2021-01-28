@@ -2,7 +2,7 @@
 
 namespace MashinaMashina\Bxmod\Orm\Fields;
 
-use \Bitrix\Main\Orm\Fields\EnumField;
+use \Bitrix\Main\Orm\Fields;
 
 class EnumField extends Fields\EnumField
 {
