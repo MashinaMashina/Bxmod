@@ -2,6 +2,9 @@
 
 namespace Bxmod\Example;
 
+use \Bitrix\Main\Loader;
+use \Bitrix\Main\Orm\Query\Join;
+use \Bitrix\Main\Entity\Query;
 use \Bitrix\Main\Localization\Loc;
 use \MashinaMashina\Bxmod\Orm\Entity\DataManager;
 use \MashinaMashina\Bxmod\Orm\Fields;
@@ -17,7 +20,7 @@ class StudentsGroupTable extends DataManager
 	
 	public static function getMap()
 	{
-		return [
+		$fields = [
 			new Fields\IntegerField('ID', [
 				'primary' => true,
 				'autocomplete' => true,
@@ -45,5 +48,31 @@ class StudentsGroupTable extends DataManager
 				->configureJoinType('left')
 				->setParameter('bxmod_relation_view_type', 'editor')
 		];
+		
+		if (Loader::includeModule('catalog'))
+		{
+			$fields[] = new Fields\IntegerField('PRODUCT_ID', [
+				'bxmod_hidden' => true,
+			]);
+			
+			$fields[] = (new Fields\Relations\Reference(
+				'PRODUCT',
+				\Bitrix\Catalog\ProductTable::class,
+                Join::on('this.PRODUCT_ID', 'ref.ID')
+			))
+			->setParameter('bxmod_relation_view_type', 'editor')
+			->setParameter('get_all_references_func', function($field, $refEntity){
+				$query = new Query($refEntity);
+				$query->setSelect(['ID', 'NAME' => 'IBLOCK_ELEMENT.NAME']);
+				$elements = $query->exec()->fetchAll();
+				
+				return array_combine(
+					array_column($elements, 'ID'),
+					array_column($elements, 'NAME')
+				);
+			});
+		}
+		
+		return $fields;
 	}
 }

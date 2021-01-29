@@ -20,7 +20,7 @@ abstract class Relation extends Field
 		}
 		
 		$twoColumns = true;
-		if ($field->getParameter('bxmod_relation_view_type') === 'editor')
+		if ($field->getParameter('bxmod_relation_view_type') === 'editor' and isset(static::$isOneToMany))
 			$twoColumns = false;
 		
 		$result = '<tr>';
@@ -44,16 +44,17 @@ abstract class Relation extends Field
 	
 	public static function buildInput(Fields\Field $field, EntityObject $entity, $table, $tagData = [])
 	{
-		switch ($field->getParameter('bxmod_relation_view_type'))
+		if ($field->getParameter('bxmod_relation_view_type') === 'editor' /* and isset(static::$isOneToMany) */)
 		{
-			case 'editor':
-				return self::buildEditor($field, $entity, $table, $tagData);
-			
-			case 'ajax_select':
-				return self::buildAjaxSelect($field, $entity, $table, $tagData);
-			
-			default:
-				return self::buildSelect($field, $entity, $table, $tagData);
+			return self::buildEditor($field, $entity, $table, $tagData);
+		}
+		elseif ($field->getParameter('bxmod_relation_view_type') === 'ajax_select')
+		{
+			return self::buildAjaxSelect($field, $entity, $table, $tagData);
+		}
+		else
+		{
+			return self::buildSelect($field, $entity, $table, $tagData);
 		}
 		
 		// if ($autocompleteLink = $field->getParameter('bxmod_input_ajax_autocomplete_link'))
@@ -186,6 +187,11 @@ abstract class Relation extends Field
 		$refEntity = $field->getRefEntity();
 		$editorId = 'editor' . uniqid();
 		
+		if (! ($refEntity->getDataClass() instanceof \MashinaMashina\Bxmod\Orm\Entity\DataManager))
+		{
+			throw new \Exception('Table ' . $refEntity->getDataClass() . ' cannot be used as editor');
+		}
+		
 		if (is_null($entity->get($field->getName())) and ! empty(reset($entity->primary)))
 		{
 			$entity->fill($field->getName());
@@ -263,13 +269,11 @@ abstract class Relation extends Field
 			if ($fieldChild->getParameter('bxmod_hidden') === true)
 				continue;
 			
-			$class = str_replace('MashinaMashina\Bxmod\Orm\Fields', 'MashinaMashina\Bxmod\Admin\Form\Editors', get_class($fieldChild));
-			
 			$name = $fieldChild->getName();
 			$childName = $field->getName() . "[{$n}][{$name}]";
 			
 			$childTable = $field->getRefEntityName() . 'Table';
-			$line .= '<td>' . ($class)::buildInput($fieldChild, $value, new $childTable, [
+			$line .= '<td>' . ($fieldChild->getEditorClass())::buildInput($fieldChild, $value, new $childTable, [
 				'name' => $childName,
 			]) . '</td>';
 		}

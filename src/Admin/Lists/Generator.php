@@ -78,17 +78,18 @@ class Generator extends BaseGenerator
 	
 	protected function executeGroupActions()
 	{
+		$action = $this->request->getPost('action');
+		$target = $this->request->getPost('action_target');
+		
+		if (empty($action))
+			$action = $this->request->getPost('action_button');
+		
 		$arIds = $this->adminList->GroupAction();
-		if ($arIds === false)
+		
+		if ($arIds === false and $target !== 'selected')
 		{
 			return;
 		}
-		
-		$action = $this->request->getQuery('action');
-		$target = $this->request->getQuery('action_target');
-		
-		if (empty($action))
-			$action = $this->request->getQuery('action_button');
 		
 		$filter = [];
 		if ($target !== 'selected')
