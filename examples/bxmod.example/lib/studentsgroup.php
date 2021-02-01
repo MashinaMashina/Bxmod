@@ -60,7 +60,6 @@ class StudentsGroupTable extends DataManager
 				\Bitrix\Catalog\ProductTable::class,
                 Join::on('this.PRODUCT_ID', 'ref.ID')
 			))
-			->setParameter('bxmod_relation_view_type', 'editor')
 			->setParameter('get_all_references_func', function($field, $refEntity){
 				$query = new Query($refEntity);
 				$query->setSelect(['ID', 'NAME' => 'IBLOCK_ELEMENT.NAME']);

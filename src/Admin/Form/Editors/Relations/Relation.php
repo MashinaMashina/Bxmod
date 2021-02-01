@@ -20,8 +20,13 @@ abstract class Relation extends Field
 		}
 		
 		$twoColumns = true;
-		if ($field->getParameter('bxmod_relation_view_type') === 'editor' and isset(static::$isOneToMany))
+		if ($field->getParameter('bxmod_relation_view_type') === 'editor' and (
+			is_subclass_of(get_called_class(), OneToMany::class)
+			or get_called_class() === OneToMany::class
+		))
+		{
 			$twoColumns = false;
+		}
 		
 		$result = '<tr>';
 		$result .= $twoColumns ? '<td>' : '<td colspan="2">';
@@ -44,7 +49,10 @@ abstract class Relation extends Field
 	
 	public static function buildInput(Fields\Field $field, EntityObject $entity, $table, $tagData = [])
 	{
-		if ($field->getParameter('bxmod_relation_view_type') === 'editor' /* and isset(static::$isOneToMany) */)
+		if ($field->getParameter('bxmod_relation_view_type') === 'editor' and (
+			is_subclass_of(get_called_class(), OneToMany::class)
+			or get_called_class() === OneToMany::class
+		))
 		{
 			return self::buildEditor($field, $entity, $table, $tagData);
 		}
@@ -118,7 +126,6 @@ abstract class Relation extends Field
 	protected static function buildSelect($field, $entity, $table, $tagData = [])
 	{
 		$refEntity = $field->getRefEntity();
-		echo PHP_EOL . PHP_EOL . PHP_EOL;
 		
 		if (is_null($entity->get($field->getName())) and ! empty(reset($entity->primary)))
 		{
@@ -187,9 +194,10 @@ abstract class Relation extends Field
 		$refEntity = $field->getRefEntity();
 		$editorId = 'editor' . uniqid();
 		
-		if (! ($refEntity->getDataClass() instanceof \MashinaMashina\Bxmod\Orm\Entity\DataManager))
+		if (! is_subclass_of($refEntity->getDataClass(), \MashinaMashina\Bxmod\Orm\Entity\DataManager::class))
 		{
-			throw new \Exception('Table ' . $refEntity->getDataClass() . ' cannot be used as editor');
+			throw new \Exception('Table ' . $refEntity->getDataClass() . ' must be instance of '
+				. \MashinaMashina\Bxmod\Orm\Entity\DataManager::class . ' for use as editable');
 		}
 		
 		if (is_null($entity->get($field->getName())) and ! empty(reset($entity->primary)))
