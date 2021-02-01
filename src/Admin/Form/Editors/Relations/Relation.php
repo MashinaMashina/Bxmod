@@ -4,6 +4,7 @@ namespace MashinaMashina\Bxmod\Admin\Form\Editors\Relations;
 
 use \Bitrix\Main\ORM\Objectify\EntityObject;
 use \Bitrix\Main\ORM\Fields;
+use \Bitrix\Main\Localization\Loc;
 use \MashinaMashina\Bxmod\Admin\Form\Editors\Field;
 use \MashinaMashina\Bxmod\Tools\Html;
 use \MashinaMashina\Bxmod\ORM\Fields\Relations;
@@ -152,7 +153,7 @@ abstract class Relation extends Field
 		{
 			$options .= Html::buildTag('option', [
 				'value' => '',
-			], ' ');
+			], Loc::getMessage('bxmod_not_selected'));
 		}
 		
 		foreach ($allElements as $id => $name)

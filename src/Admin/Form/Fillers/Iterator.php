@@ -9,6 +9,8 @@ class Iterator
 {
 	public static function fillEntity(Entity $entityTable, EntityObject $entity, $data)
 	{
+		static::fixReferences($entity);
+		
 		$avaibledFields = $entityTable->getFields();
 		foreach ($avaibledFields as $field)
 		{
@@ -103,6 +105,32 @@ class Iterator
 					break;
 			}
 			*/
+		}
+	}
+	
+	/*
+	 * Фикс для версий Битрикс ниже 20.1.
+	 * Исправление ошибки
+	 * Call to a member function save() on null (0)
+	 * /bitrix/modules/main/lib/orm/objectify/entityobject.php:1757
+	 * Удаляем пустые референсы из актуальных значений
+	 */
+	public static function fixReferences(EntityObject $entity)
+	{
+		$currentValues = $entity->collectValues(\Bitrix\Main\ORM\Objectify\Values::CURRENT, \Bitrix\Main\ORM\Fields\FieldTypeMask::REFERENCE);
+		$actualValues = $entity->collectValues(\Bitrix\Main\ORM\Objectify\Values::ACTUAL, \Bitrix\Main\ORM\Fields\FieldTypeMask::REFERENCE);
+		
+		foreach ($actualValues as $fieldName => $value)
+		{
+			if (is_null($value))
+			{
+				$entity->sysUnset($fieldName);
+				
+				if (isset($currentValues[$fieldName]))
+				{
+					$entity->sysSetValue($fieldName, $$currentValues[$fieldName]);
+				}
+			}
 		}
 	}
 }
