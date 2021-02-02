@@ -186,7 +186,7 @@ class Generator extends BaseGenerator
 		
 		$entityTable = $this->entityClass->getEntity();
 		$entity = $this->getEntity();
-		Fillers\Iterator::fillEntity($entityTable, $entity, $this->request->getPostList());
+		Fillers\Iterator::fillEntity($entityTable, $entity, $this->request);
 		
 		$obResult = $entity->save();
 		

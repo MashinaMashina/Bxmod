@@ -43,7 +43,6 @@ class StudentsTable extends DataManager
 			]),
 			new Fields\TextField('DESCRIPTION', [
 			]),
-			
 			new Fields\IntegerField('GROUP_ID', [
 				'bxmod_hidden' => true,
 			]),
@@ -52,6 +51,8 @@ class StudentsTable extends DataManager
 				StudentsGroupTable::class,
                 Join::on('this.GROUP_ID', 'ref.ID')
 			)),
+			new Fields\FileField('AVATAR', [
+			]),
 		];
 	}
 }
