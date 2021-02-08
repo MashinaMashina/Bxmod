@@ -40,8 +40,11 @@ class OneToMany extends Relation
 		{
 			if (! in_array($primary, $primaries))
 			{
-				if ($value === '')
-					$value = 0;
+				if ($primary === 'none')
+					continue;
+				
+				if ($primary === '')
+					$primary = 0;
 				
 				$entity->addTo($field->getName(), ($field->getRefEntityName() . 'Table')::wakeUpObject($primary));
 			}

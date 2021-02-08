@@ -7,7 +7,7 @@ use \Bitrix\Main\Entity\Query;
 class SaleLocationDriver extends BaseDriver
 {
 	public static function getReferences($field, $refEntity, $filter = [])
-	{
+	{	
 		$query = new Query($refEntity);
 		$query->setSelect(['ID', 'LNAME' => 'NAME.NAME']);
 		$query->addFilter('NAME.LANGUAGE_ID', 'ru');
@@ -21,20 +21,15 @@ class SaleLocationDriver extends BaseDriver
 		{
 			if ($field instanceof \MashinaMashina\Bxmod\Orm\Fields\Relations\ManyToMany)
 			{
-				// $mediator = $field->getMediatorEntity();
-				// var_dump($mediator);
-				// exit;
-				// $query->registerRuntimeField($mediator->getDBTableName(),
-					// [
-						// 'data_type' => $mediator,
-						// 'reference' => [
-							// '=this.id' => 'ref.LOCATION_ID',
-							// '=ref.AKVILON_REGIONS_ID' => new SqlExpression('?i', $primaryKey),
-						// ],
-						// 'join_type' => "inner",
-					// ]
-				// );
-				Return [];
+				$elements = $filter['entity']->fill([$field->getName()])->getAll();
+				
+				$ids = [];
+				foreach ($elements as $element)
+				{
+					$ids[] = $element->get('ID');
+				}
+				
+				$query->addFilter('ID', $ids);
 			}
 			else
 			{

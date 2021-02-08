@@ -78,15 +78,17 @@ abstract class Relation extends Field
 		
 		$autocompleteLink .= bitrix_sessid_get() . '&query=';
 		
-		$options = '';
-		// $selected = $this->getEntity()->get($field->getName());
+		$options = Html::buildTag('option', [
+			'value' => 'none',
+			'selected' => '',
+		], '');
 		$selected = $field->getAllReferences(['entity' => $entity]);
-		foreach ($selected as $select)
+		foreach ($selected as $key => $name)
 		{
 			$options .= Html::buildTag('option', [
-				'value' => $select['id'],
+				'value' => $key,
 				'selected' => '',
-			], htmlentities($select['name']));
+			], htmlentities($name));
 		}
 		
 		\CJSCore::Init(['chosen', 'autocomplete']);

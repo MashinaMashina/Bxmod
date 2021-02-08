@@ -17,8 +17,23 @@ class CatalogDriver extends BaseDriver
 		}
 		if (isset($filter['entity']))
 		{
-			foreach ($filter['entity']->primary as $k => $v)
-				$query->addFilter($k, $v);
+			if ($field instanceof \MashinaMashina\Bxmod\Orm\Fields\Relations\ManyToMany)
+			{
+				$elements = $filter['entity']->fill([$field->getName()])->getAll();
+				
+				$ids = [];
+				foreach ($elements as $element)
+				{
+					$ids[] = $element->get('ID');
+				}
+				
+				$query->addFilter('ID', $ids);
+			}
+			else
+			{
+				foreach ($filter['entity']->primary as $k => $v)
+					$query->addFilter($k, $v);
+			}
 		}
 		else
 		{
