@@ -53,8 +53,7 @@ class Generator extends BaseGenerator
 			'TITLE' => $this->getLangMessage('entity_add'),
 			'ICON' => 'btn_new',
 		]];
-
-		// и прикрепим его к списку
+		
 		$this->adminList->AddAdminContextMenu($aContext);
 		
 		$this->adminList->AddFooter([
@@ -78,11 +77,8 @@ class Generator extends BaseGenerator
 	
 	protected function executeGroupActions()
 	{
-		$action = $this->request->getPost('action');
-		$target = $this->request->getPost('action_target');
-		
-		if (empty($action))
-			$action = $this->request->getPost('action_button');
+		$action = $_REQUEST['action_button'];
+		$target = $_REQUEST['action_target'];
 		
 		$arIds = $this->adminList->GroupAction();
 		
@@ -104,7 +100,9 @@ class Generator extends BaseGenerator
 		{
 			case 'delete':
 				foreach ($collection as $entity)
+				{
 					$entity->delete();
+				}
 				
 				return;
 				break;
@@ -134,6 +132,9 @@ class Generator extends BaseGenerator
 		$fields = $this->entityClass->getEntity()->getFields();
 		foreach ($fields as $field)
 		{
+			if ($field->getParameter('bxmod_hidden') === true)
+				continue;
+			
 			$headers[] = [
 				'id' => $field->getName(),
 				'content' => $field->getTitle(),
@@ -150,9 +151,9 @@ class Generator extends BaseGenerator
 		$id = reset($entity->primary);
 		$editLink = $this->formLink([$this->primaryCode => $id]);
 		
-		$row = $this->adminList->AddRow($id, $entity->collectValues()); 
+		$entityTable = $this->entityClass->getEntity();
+		$row = $this->adminList->AddRow($id, Viewers\Iterator::prepareView($entityTable, $entity)); 
 		
-		// сформируем контекстное меню
 		$arActions = [];
 
 		$arActions[] = [
@@ -167,8 +168,7 @@ class Generator extends BaseGenerator
 			'TEXT' => $this->getLangMessage('entity_delete'),
 			'ACTION' => 'if(confirm("'.$this->getLangMessage('entity_delete').'?")) '.$this->adminList->ActionDoGroup($id, 'delete')
 		];
-
-		// применим контекстное меню к строке
+		
 		$row->AddActions($arActions);
 	}
 }

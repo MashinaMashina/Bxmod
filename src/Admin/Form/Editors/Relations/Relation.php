@@ -5,6 +5,7 @@ namespace MashinaMashina\Bxmod\Admin\Form\Editors\Relations;
 use \Bitrix\Main\ORM\Objectify\EntityObject;
 use \Bitrix\Main\ORM\Fields;
 use \Bitrix\Main\Localization\Loc;
+use \Bitrix\Main\Security;
 use \MashinaMashina\Bxmod\Admin\Form\Editors\Field;
 use \MashinaMashina\Bxmod\Tools\Html;
 use \MashinaMashina\Bxmod\ORM\Fields\Relations;
@@ -42,7 +43,7 @@ abstract class Relation extends Field
 		{
 			$result .= static::buildInput($field, $entity, $table, $tagData);
 		}
-		
+		$result .= $twoColumns ? ' ' . $field->getDescription() : '';
 		$result .= '</td></tr>';
 		
 		return $result;
@@ -55,73 +56,109 @@ abstract class Relation extends Field
 			or get_called_class() === OneToMany::class
 		))
 		{
-			return self::buildEditor($field, $entity, $table, $tagData);
+			return static::buildEditor($field, $entity, $table, $tagData);
 		}
 		elseif ($field->getParameter('bxmod_relation_view_type') === 'ajax_select')
 		{
-			return self::buildAjaxSelect($field, $entity, $table, $tagData);
+			return static::buildAjaxSelect($field, $entity, $table, $tagData);
 		}
 		else
 		{
-			return self::buildSelect($field, $entity, $table, $tagData);
+			return static::buildSelect($field, $entity, $table, $tagData);
+		}
+	}
+	
+	protected static function buildAjaxSelect($field, $entity, $table, $tagData = [])
+	{
+		$autocompleteLink = 'superlink';
+		if (strpos($autocompleteLink, '?') === false)
+			$autocompleteLink .= '?';
+		else
+			$autocompleteLink .= '&';
+		
+		$autocompleteLink .= bitrix_sessid_get() . '&query=';
+		
+		$options = '';
+		// $selected = $this->getEntity()->get($field->getName());
+		$selected = $field->getAllReferences(['entity' => $entity]);
+		foreach ($selected as $select)
+		{
+			$options .= Html::buildTag('option', [
+				'value' => $select['id'],
+				'selected' => '',
+			], htmlentities($select['name']));
 		}
 		
-		// if ($autocompleteLink = $field->getParameter('bxmod_input_ajax_autocomplete_link'))
-		// {
-			// if (strpos($autocompleteLink, '?') === false)
-				// $autocompleteLink .= '?';
-			// else
-				// $autocompleteLink .= '&';
-			
-			// $autocompleteLink .= bitrix_sessid_get() . '&query=';
-			
-			// $options = '';
-			// $selected = $this->getEntity()->get($field->getName());
-			// foreach ($selected as $select)
-			// {
-				// $options .= Html::buildTag('option', [
-					// 'value' => $select['id'],
-					// 'selected' => '',
-				// ], htmlentities($select['name']));
-			// }
-			
-			// \CJSCore::Init(['chosen', 'autocomplete']);
-			
-			// $uniqid = 'id'.uniqid();
-			
-			// $data = ['id' => $uniqid, 'multiple' => '', 'name' => $field->getName() . '[]'];
-			// $result = Html::buildTag('select', $data, $options . '<option value="" disabled>Enter name...</option>');
-			
-			// $result .= '<script>
-				// $(function(){
-					// $("#'.$uniqid.'").chosen({
-						// width:"300px",
-					// });
-					
-					// $(".chosen-choices input").autocomplete({
-						// minLength: 2,
-						// delay: 500,
-						// source: function( request, response ) {
-							// $.ajax({
-								// url: "'.$autocompleteLink.'"+request.term,
-								// dataType: "json",
-							// }).done(function(data) {
-									// $("#'.$uniqid.' option").each(function(){
-										// if (! $(this).prop("selected"))
-											// $(this).remove();
-									// });
-									// data.reverse();
-									// response( $.map( data, function( item ) {
-										// $("#'.$uniqid.'").prepend(\'<option value="\'+item.id+\'">\' + item.name + \'</option>\');
-									// }));
-									// $("#'.$uniqid.'").trigger("chosen:updated");
-									// $(".chosen-choices input").val(request.term);
-								// });
-						// }
-					// });
-				// });
-			// </script>';
-		// }
+		\CJSCore::Init(['chosen', 'autocomplete']);
+		
+		$uniqid = 'id'.uniqid();
+		$moduleId = str_replace('.', ':', $entity->sysGetEntity()->getModule());
+		
+		$data = ['id' => $uniqid, 'multiple' => '', 'name' => $field->getName() . '[]'];
+		$result = Html::buildTag('select', $data, $options . '<option value="" disabled>Enter name...</option>');
+		
+		$ajaxParams = [
+			'field_name' => $field->getName(),
+			'entity' => get_class($table),
+		];
+		
+		$signer = new Security\Sign\Signer;
+		$signedParams = $signer->sign(base64_encode(serialize($ajaxParams)), 'bxmod');
+		
+		$result .= '<script>
+			$(function(){
+				$("#'.$uniqid.'").chosen({
+					width:"300px",
+				});
+				
+				$(".chosen-choices input").autocomplete({
+					minLength: 2,
+					delay: 500,
+					source: function(request, response) {
+						BX.ajax.runAction("'.$moduleId.'.ajaxinput.getselectoptions", {
+							data: {
+								query: request.term,
+								signedParameters: "'.$signedParams.'",
+								c: "bxmod" // dont remove, needs for sign
+							},
+						}).then(function (result) {
+							$("#'.$uniqid.' option").each(function(){
+								if (! $(this).prop("selected"))
+									$(this).remove();
+							});
+							result.data.reverse();
+							response($.map(result.data, function(item){
+								$("#'.$uniqid.'").prepend(\'<option value="\'+item.id+\'">\' + item.name + \'</option>\');
+							}));
+							$("#'.$uniqid.'").trigger("chosen:updated");
+							$(".chosen-choices input").val(request.term);
+						}, function (result) {
+							alert("Error. See console for more information");
+							console.error("Request error.", result);
+						});
+						/*
+						$.ajax({
+							url: "'.$autocompleteLink.'"+request.term,
+							dataType: "json",
+						}).done(function(result) {
+								$("#'.$uniqid.' option").each(function(){
+									if (! $(this).prop("selected"))
+										$(this).remove();
+								});
+								result.data.reverse();
+								response($.map(result.data, function(item){
+									$("#'.$uniqid.'").prepend(\'<option value="\'+item.id+\'">\' + item.name + \'</option>\');
+								}));
+								$("#'.$uniqid.'").trigger("chosen:updated");
+								$(".chosen-choices input").val(request.term);
+							});
+						*/
+					}
+				});
+			});
+		</script>';
+		
+		return $result;
 	}
 	
 	protected static function buildSelect($field, $entity, $table, $tagData = [])

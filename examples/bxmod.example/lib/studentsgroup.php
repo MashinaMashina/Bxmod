@@ -49,7 +49,7 @@ class StudentsGroupTable extends DataManager
 				->setParameter('bxmod_relation_view_type', 'editor')
 		];
 		
-		if (Loader::includeModule('catalog'))
+		if (Loader::includeModule('catalog') and Loader::includeModule('sale'))
 		{
 			$fields[] = new Fields\IntegerField('PRODUCT_ID', [
 				'bxmod_hidden' => true,
@@ -60,16 +60,17 @@ class StudentsGroupTable extends DataManager
 				\Bitrix\Catalog\ProductTable::class,
                 Join::on('this.PRODUCT_ID', 'ref.ID')
 			))
-			->setParameter('get_all_references_func', function($field, $refEntity){
-				$query = new Query($refEntity);
-				$query->setSelect(['ID', 'NAME' => 'IBLOCK_ELEMENT.NAME']);
-				$elements = $query->exec()->fetchAll();
-				
-				return array_combine(
-					array_column($elements, 'ID'),
-					array_column($elements, 'NAME')
-				);
-			});
+				->setParameter('get_all_references_func', function($field, $refEntity){
+					return \MashinaMashina\Bxmod\Admin\Form\Editors\Relations\ReferenceDrivers\CatalogDriver::getReferences($field, $refEntity, $filter);
+				});
+			/*
+			$fields[] = (new Fields\Relations\ManyToMany('LOCATIONS', \Bitrix\Sale\Location\LocationTable::class))
+                ->configureTableName('bxmod_students_groups_locations')
+				->setParameter('bxmod_relation_view_type', 'ajax_select')
+				->setParameter('get_all_references_func', function($field, $refEntity, $filter){
+					return \MashinaMashina\Bxmod\Admin\Form\Editors\Relations\ReferenceDrivers\SaleLocationDriver::getReferences($field, $refEntity, $filter);
+				});
+				*/
 		}
 		
 		return $fields;

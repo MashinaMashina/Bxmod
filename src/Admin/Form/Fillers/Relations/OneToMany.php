@@ -3,6 +3,7 @@
 namespace MashinaMashina\Bxmod\Admin\Form\Fillers\Relations;
 
 use \MashinaMashina\Bxmod\Admin\Form\Fillers;
+use \Bitrix\Main;
 
 class OneToMany extends Relation
 {
@@ -153,7 +154,9 @@ class OneToMany extends Relation
 				$refEntity = ($refTable)::createObject();
 			}
 			
-			Fillers\Iterator::fillEntity(($refTable)::getEntity(), $refEntity, $value);
+			$server = new Main\Server($_SERVER);
+			$request = new Main\HttpRequest($server, $_GET, $value, $_FILES, $_COOKIE);
+			Fillers\Iterator::fillEntity(($refTable)::getEntity(), $refEntity, $request);
 			
 			$result[] = $refEntity;
 		}

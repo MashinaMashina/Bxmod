@@ -25,6 +25,7 @@ abstract class Field
 		$result .= $fieldName;
 		$result .= '</td><td width="60%">';
 		$result .= static::buildInput($field, $entity, $table, $tagData);
+		$result .= ' ' . $field->getDescription();
 		$result .= '</td></tr>';
 		
 		return $result;

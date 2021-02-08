@@ -2,7 +2,7 @@
 
 namespace MashinaMashina\Bxmod\Admin\Form\Fillers\Relations;
 
-class ManyToMany extends Relation
+class ManyToMany extends OneToMany
 {
 
 }

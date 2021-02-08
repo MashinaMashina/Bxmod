@@ -1,27 +1,20 @@
 <?php
 namespace MashinaMashina\Bxmod\Orm\Fields\Relations;
 
-use \Bitrix\Main\Entity\Query;
+use \MashinaMashina\Bxmod\Admin\Form\Editors\Relations\ReferenceDrivers\SimpleDriver;
 
 trait RelationTrait
 {
-	public function getAllReferences()
+	public function getAllReferences($filter = [])
 	{
 		$references = $this->getParameter('get_all_references_func');
 		$refEntity = $this->getRefEntity();
 		
 		if (is_callable($references))
 		{
-			return $references($this, $refEntity);
+			return $references($this, $refEntity, $filter);
 		}
 		
-		$query = new Query($refEntity);
-		$query->setSelect(['ID', 'NAME']);
-		$elements = $query->exec()->fetchAll();
-		
-		return array_combine(
-			array_column($elements, 'ID'),
-			array_column($elements, 'NAME')
-		);
+		return SimpleDriver::getReferences($this, $refEntity, $filter);
 	}
 }
