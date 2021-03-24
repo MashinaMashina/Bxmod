@@ -120,4 +120,18 @@ class BaseInstaller extends \CModule
 		Main\Loader::IncludeModule('fileman');
 		\CHTMLEditor::GetComponents([], true);
 	}
+	
+	protected function Migrate($dir, $oldVersion)
+	{
+		$migrations = scandir($dir);
+		$oldVersion .= '.php';
+		
+		foreach ($migrations as $migrateFile)
+		{
+			if ($migrateFile === '.' or $migrateFile === '..') continue;
+			if (version_compare($migrateFile, $oldVersion) <= 0) continue;
+			
+			require $dir . $migrateFile; 
+		}
+	}
 }

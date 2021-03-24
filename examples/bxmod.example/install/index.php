@@ -53,7 +53,7 @@ class bxmod_example extends BaseInstaller
 		$oldVersion = Option::get($this->MODULE_ID, 'INSTALLED_VERSION');
 		if ($oldVersion)
 		{
-			$this->migrate($oldVersion);
+			$this->migrate(__DIR__ . '/migrations/', $oldVersion);
 		}
 		else
 		{
@@ -89,19 +89,5 @@ class bxmod_example extends BaseInstaller
 		}
 		
 		UnRegisterModule($this->MODULE_ID);
-	}
-	
-	protected function migrate($oldVersion)
-	{
-		$migrations = scandir(__DIR__ . '/migrations');
-		$oldVersion .= '.php';
-		
-		foreach ($migrations as $migrateFile)
-		{
-			if ($migrateFile === '.' or $migrateFile === '..') continue;
-			if (version_compare($migrateFile, $oldVersion) <= 0) continue;
-			
-			require __DIR__ . '/migrations/' . $migrateFile; 
-		}
 	}
 }
