@@ -1,6 +1,7 @@
 <?php
 
 use \Bitrix\Main\Localization\Loc;
+use \Bitrix\Main\Config\Option;
 use \MashinaMashina\Bxmod\Install\BaseInstaller;
 
 class bxmod_example extends BaseInstaller
@@ -14,48 +15,93 @@ class bxmod_example extends BaseInstaller
 	public function __construct()
 	{
 		Loc::loadMessages(__FILE__);
-		require_once __DIR__ . '/version.php';
+		require __DIR__ . '/version.php';
 		require_once __DIR__ . '/../lib/students.php';
 		require_once __DIR__ . '/../lib/studentsgroup.php';
 		require_once __DIR__ . '/../lib/targets.php';
 		
 		$this->MODULE_VERSION = $arModuleVersion['VERSION'];
 		$this->MODULE_VERSION_DATE = $arModuleVersion['VERSION_DATE'];
-		$this->MODULE_NAME = GetMessage('BXMOD_EXAMPLE_NAME');
+		$this->MODULE_NAME = Loc::getMessage('BXMOD_EXAMPLE_NAME');
 		
-		$this->PARTNER_NAME = GetMessage("BXMOD_PARTNER");
+		$this->PARTNER_NAME = Loc::getMessage("BXMOD_PARTNER");
 		$this->PARTNER_URI = 'https://github.com/MashinaMashina/Bxmod';
 		
 		$this->addModuleEntity(\Bxmod\Example\StudentsTable::class);
 		$this->addModuleEntity(\Bxmod\Example\StudentsGroupTable::class);
 		$this->addModuleEntity(\Bxmod\Example\TargetsTable::class);
 		
-		// $studentClass = '\\' . substr(\Morozov\Nyamus\ShipmentsTable::class, 0, -5); // Удалим суффикс "Table"
+		/*
+		 *Пример добавления события сущности
+		 *
 		
-		// $this->addModuleEvent(
-			// $this->MODULE_ID,
-			// $studentClass . '::onBeforeAdd',
-			// $this->MODULE_ID,
-			// \Morozov\Nyamus\ShipmentsHandler::class, "onShipmentBeforeAdd"
-		// );
+		$studentClass = '\\' . substr(\Bxmod\Example\StudentsTable::class, 0, -5); // Удалим суффикс "Table"
+		
+		$this->addModuleEvent(
+			$this->MODULE_ID,
+			$studentClass . '::onBeforeAdd',
+			$this->MODULE_ID,
+			\Bxmod\Example\Studentshandler::class, "onStudentBeforeAdd"
+		);
+		*/
 	}
 	
 	public function DoInstall()
 	{
 		RegisterModule($this->MODULE_ID);
 		
-		$this->InstallEntities();
+		$oldVersion = Option::get($this->MODULE_ID, 'INSTALLED_VERSION');
+		if ($oldVersion)
+		{
+			$this->migrate($oldVersion);
+		}
+		else
+		{
+			$this->InstallEntities();
+		}
+		
 		$this->InstallEvents();
 		CopyDirFiles(__DIR__ . '/admin', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/admin', true);
+		
+		Option::set($this->MODULE_ID, 'INSTALLED_VERSION', $this->MODULE_VERSION);
 	}
 	
 	public function DoUninstall()
 	{
+		global $APPLICATION;
+		
+		if($_REQUEST['step'] < 2)
+		{
+			$APPLICATION->IncludeAdminFile(Loc::getMessage("BXMOD_UNINSTALL_TITLE"), __DIR__ . '/unstep1.php');
+			return;
+		}
+		
+		$saveData = $_REQUEST['savedata'] === 'Y';
+		
 		DeleteDirFiles(__DIR__ . '/admin/', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/admin');
 		
 		$this->UninstallEvents();
-		$this->UninstallEntities();
+		
+		if (! $saveData)
+		{
+			$this->UninstallEntities();
+			Option::delete($this->MODULE_ID, ['name' => 'INSTALLED_VERSION']);
+		}
 		
 		UnRegisterModule($this->MODULE_ID);
+	}
+	
+	protected function migrate($oldVersion)
+	{
+		$migrations = scandir(__DIR__ . '/migrations');
+		$oldVersion .= '.php';
+		
+		foreach ($migrations as $migrateFile)
+		{
+			if ($migrateFile === '.' or $migrateFile === '..') continue;
+			if (version_compare($migrateFile, $oldVersion) <= 0) continue;
+			
+			require __DIR__ . '/migrations/' . $migrateFile; 
+		}
 	}
 }

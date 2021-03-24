@@ -40,9 +40,17 @@ class BaseInstaller extends \CModule
 		$this->entities[] = $entityClass;
 	}
 	
-	public function InstallEntities()
+	public function getModuleEntities()
 	{
-		foreach ($this->getModuleEntities() as $entityClass)
+		return $this->entities;
+	}
+	
+	public function InstallEntities($entities = false)
+	{
+		if (! $entities)
+			$entities = $this->getModuleEntities();
+		
+		foreach ($entities as $entityClass)
 		{
 			$entity = ($entityClass)::getEntity();
 			$tableName = ($entityClass)::getTableName();
@@ -105,11 +113,6 @@ class BaseInstaller extends \CModule
 				}
 			}
 		}
-	}
-	
-	public function getModuleEntities()
-	{
-		return $this->entities;
 	}
 	
 	public function clearComponentsCache()
