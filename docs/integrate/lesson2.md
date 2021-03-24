@@ -35,4 +35,4 @@ public function __construct()
 
 [Полная правильная реализация установщика для примера в тестовом модуле](https://github.com/MashinaMashina/Bxmod/blob/master/examples/bxmod.example/install/index.php)
 
-## [Следующий урок](lesson2.md)
+## [Следующий урок](lesson3.md)
