@@ -10,15 +10,24 @@ class TextField extends StringField
 {
 	public static function buildInput(Fields\Field $field, EntityObject $entity, $table, $tagData = [])
 	{
+		$value = $entity->get($field->getName());
+		/*
+		 * Множественные пользовательские поля передаются как массив
+		 */
+		if (is_array($value))
+		{
+			$value = implode("\r\n", $value);
+		}
+		
 		if ($field->getParameter('bxmod_readonly') === true)
 		{
-			return htmlspecialcharsbx($entity[$field->getName()]);
+			return htmlspecialcharsbx($value);
 		}
 		else
 		{
 			return Html::buildTag('textarea', $tagData + [
 				'name' => $field->getName(),
-			], htmlentities($entity->get($field->getName())));
+			], htmlentities($value));
 		}
 	}
 }

@@ -8,7 +8,7 @@ class DatetimeField extends DateField
 {
 	public static function fillEntity($entity, $field, $value)
 	{
-		if (! is_object($value))
+		if (! is_object($value) and ! empty($value))
 		{
 			$value = DateTime::createFromTimestamp(strtotime($value));
 		}

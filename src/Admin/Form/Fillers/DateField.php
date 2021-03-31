@@ -8,7 +8,7 @@ class DateField extends ScalarField
 {
 	public static function fillEntity($entity, $field, $value)
 	{
-		if (! is_object($value))
+		if (! is_object($value) and ! empty($value))
 		{
 			$value = Date::createFromTimestamp(strtotime($value));
 		}

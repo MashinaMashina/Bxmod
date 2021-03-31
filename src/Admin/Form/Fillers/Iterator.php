@@ -15,15 +15,24 @@ class Iterator
 		$avaibledFields = $entityTable->getFields();
 		foreach ($avaibledFields as $field)
 		{
+			if (isset($field->isbxmod) and $field->isbxmod)
+			{
+				$filler = $field->getFillerClass();
+			}
+			else
+			{
+				$filler = str_replace('Bitrix\Main\ORM\Fields', 'MashinaMashina\Bxmod\Admin\Form\Fillers', get_class($field));
+			}
+			
 			$name = $field->getName();
-			$value = ($field->getFillerClass())::getValueFromRequest($request, $field);
+			$value = ($filler)::getValueFromRequest($request, $field);
 			
 			$editable = ($field->getParameter('bxmod_readonly') !== true and $field->getParameter('bxmod_hidden') !== true);
 			
 			if (! $editable or $value === null)
 				continue;
 			
-			($field->getFillerClass())::fillEntity($entity, $field, $value);
+			($filler)::fillEntity($entity, $field, $value);
 		}
 	}
 	

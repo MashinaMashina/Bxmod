@@ -7,6 +7,7 @@ use \Bitrix\Main\ORM\Fields\FieldTypeMask;
 use \Bitrix\Main\ORM\Fields\Relations\Relation;
 use \MashinaMashina\Bxmod\Admin\BaseGenerator;
 use \MashinaMashina\Bxmod\Orm\Entity\DataManager;
+use \MashinaMashina\Bxmod\Tools\UserField;
 
 class Generator extends BaseGenerator
 {
@@ -42,7 +43,7 @@ class Generator extends BaseGenerator
 	}
 	
 	public function display()
-	{	
+	{
 		$topMenu[] = [
 			'TEXT' => $this->getLangMessage('entity_list'),
 			'TITLE' => $this->getLangMessage('entity_list'),
@@ -84,6 +85,11 @@ class Generator extends BaseGenerator
 		$tabStarted = false;
 		foreach ($avaibledFields as $field)
 		{
+			if (strpos($field->getName(), 'UF_') === 0)
+			{
+				UserField::fillUfFieldInfo($field);
+			}
+			
 			$tabName = $field->getParameter('bxmod_tab_number');
 			
 			if ($lastTab !== $tabName)
@@ -130,7 +136,21 @@ class Generator extends BaseGenerator
 		if ($field->getParameter('bxmod_hidden') === true)
 			return;
 		
-		echo ($field->getEditorClass())::build($field, $this->getEntity(), $this->entityClass);
+		if ($field->getName() === 'UTS_OBJECT')
+		{
+			$field->setParameter('bxmod_relation_view_type', 'editor');
+		}
+		
+		if (isset($field->isbxmod) and $field->isbxmod)
+		{
+			$editor = $field->getEditorClass();
+		}
+		else
+		{
+			$editor = str_replace('Bitrix\Main\ORM\Fields', 'MashinaMashina\Bxmod\Admin\Form\Editors', get_class($field));
+		}
+		
+		echo ($editor)::build($field, $this->getEntity(), $this->entityClass);
 	}
 	
 	protected function getEntity()
@@ -139,7 +159,7 @@ class Generator extends BaseGenerator
 		{
 			if ($this->primaryKey > 0)
 			{
-				$select = ['*'];
+				$select = ['*', 'UF_*'];
 				
 				$fields = $this->entityClass->getEntity()->getFields();
 				foreach ($fields as $field)
@@ -147,6 +167,7 @@ class Generator extends BaseGenerator
 					if ($field instanceof Relation)
 					{
 						$select[] = $field->getName() . '.*';
+						$select[] = $field->getName() . '.UF_*';
 					}
 				}
 				

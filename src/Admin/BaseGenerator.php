@@ -109,5 +109,4 @@ abstract class BaseGenerator
 		if ($APPLICATION->GetGroupRight($moduleName) < $needsPerm)
 			$APPLICATION->AuthForm(Loc::getMessage("ACCESS_DENIED"));
 	}
-	
 }

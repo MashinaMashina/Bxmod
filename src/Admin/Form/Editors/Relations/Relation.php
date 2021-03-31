@@ -14,6 +14,11 @@ abstract class Relation extends Field
 {
 	public static function build(Fields\Field $field, EntityObject $entity, $table, $tagData = [])
 	{
+		if ($field->getName() === 'UTS_OBJECT')
+		{
+			return '';
+		}
+		
 		$fieldName = htmlspecialcharsbx($field->getTitle());
 		
 		if ($field->getParameter('required'))
@@ -22,10 +27,7 @@ abstract class Relation extends Field
 		}
 		
 		$twoColumns = true;
-		if ($field->getParameter('bxmod_relation_view_type') === 'editor' and (
-			is_subclass_of(get_called_class(), OneToMany::class)
-			or get_called_class() === OneToMany::class
-		))
+		if ($field->getParameter('bxmod_relation_view_type') === 'editor' and static::isAllowEditor($field))
 		{
 			$twoColumns = false;
 		}
@@ -51,10 +53,12 @@ abstract class Relation extends Field
 	
 	public static function buildInput(Fields\Field $field, EntityObject $entity, $table, $tagData = [])
 	{
-		if ($field->getParameter('bxmod_relation_view_type') === 'editor' and (
-			is_subclass_of(get_called_class(), OneToMany::class)
-			or get_called_class() === OneToMany::class
-		))
+		if ($field->getName() === 'UTS_OBJECT')
+		{
+			return '';
+		}
+		
+		if ($field->getParameter('bxmod_relation_view_type') === 'editor' and static::isAllowEditor($field))
 		{
 			return static::buildEditor($field, $entity, $table, $tagData);
 		}
@@ -66,6 +70,16 @@ abstract class Relation extends Field
 		{
 			return static::buildSelect($field, $entity, $table, $tagData);
 		}
+	}
+	
+	protected static function isAllowEditor($field)
+	{
+		return (
+			is_subclass_of(get_class($field), Fields\Relations\OneToMany::class)
+			or get_class($field) === Fields\Relations\OneToMany::class
+			or is_subclass_of(get_class($field), Fields\Relations\Reference::class)
+			or get_class($field) === Fields\Relations\Reference::class
+		);
 	}
 	
 	protected static function buildAjaxSelect($field, $entity, $table, $tagData = [])
@@ -165,8 +179,6 @@ abstract class Relation extends Field
 	
 	protected static function buildSelect($field, $entity, $table, $tagData = [])
 	{
-		$refEntity = $field->getRefEntity();
-		
 		if (is_null($entity->get($field->getName())) and ! empty(reset($entity->primary)))
 		{
 			$entity->fill($field->getName() . '.*');
@@ -186,12 +198,13 @@ abstract class Relation extends Field
 			$primarys[] = $val['ID'];
 		}
 		
+		// $allElements = [];
 		$allElements = $field->getAllReferences();
 		
 		if (! $field->getParameter('required'))
 		{
 			$options .= Html::buildTag('option', [
-				'value' => '',
+				'value' => '0',
 			], Loc::getMessage('bxmod_not_selected'));
 		}
 		
@@ -236,8 +249,8 @@ abstract class Relation extends Field
 		
 		if (! is_subclass_of($refEntity->getDataClass(), \MashinaMashina\Bxmod\Orm\Entity\DataManager::class))
 		{
-			throw new \Exception('Table ' . $refEntity->getDataClass() . ' must be instance of '
-				. \MashinaMashina\Bxmod\Orm\Entity\DataManager::class . ' for use as editable');
+			// throw new \Exception('Table ' . $refEntity->getDataClass() . ' must be instance of '
+				// . \MashinaMashina\Bxmod\Orm\Entity\DataManager::class . ' for use as editable');
 		}
 		
 		if (is_null($entity->get($field->getName())) and ! empty(reset($entity->primary)))
@@ -320,8 +333,17 @@ abstract class Relation extends Field
 			$name = $fieldChild->getName();
 			$childName = $field->getName() . "[{$n}][{$name}]";
 			
+			if (isset($field->isbxmod) and $field->isbxmod)
+			{
+				$editor = $field->getEditorClass();
+			}
+			else
+			{
+				$editor = str_replace('Bitrix\Main\ORM\Fields', 'MashinaMashina\Bxmod\Admin\Form\Editors', get_class($field));
+			}
+			
 			$childTable = $field->getRefEntityName() . 'Table';
-			$line .= '<td>' . ($fieldChild->getEditorClass())::buildInput($fieldChild, $value, new $childTable, [
+			$line .= '<td>' . ($editor)::buildInput($fieldChild, $value, new $childTable, [
 				'name' => $childName,
 			]) . '</td>';
 		}

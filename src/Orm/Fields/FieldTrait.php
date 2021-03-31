@@ -8,6 +8,7 @@ trait FieldTrait
 {
 	/** @var string */
 	protected $descr;
+	public $isbxmod = true;
 	
 	public function getEditorClass()
 	{
@@ -24,7 +25,7 @@ trait FieldTrait
 		return str_replace(__NAMESPACE__, 'MashinaMashina\Bxmod\Admin\Lists\Viewers', get_called_class());
 	}
 	
-		/**
+	/**
 	 * Lang phrase
 	 *
 	 * @param $descr
