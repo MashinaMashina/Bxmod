@@ -1,32 +1,40 @@
 (function($, win){
 	win.bxMod = {};
-	win.bxMod.editorLine = -1;
-	win.bxMod.addEditorLine = function (uniqueID)
+	win.bxMod.appendedLine = -1;
+	win.bxMod.addTemplateToContainer = function (containerId, templateId)
 	{
-		var content = $('#template-'+uniqueID).html();
-		content = content.split('#NUM#').join(win.bxMod.editorLine);
-		var matches = $.unique(content.match(/uniq_(.+?)_/g));
-		
-		for (var i=0; i<matches.length; i++)
+		var content = $('#'+templateId).html();
+		content = content.split('#NUM#').join(win.bxMod.appendedLine);
+		var matches = content.match(/uniq_(.+?)_/g);
+		if (matches)
 		{
-			content = content.split(matches[i]).join('uniq_' + win.bxMod.makeid(10) + '_');
-			console.log(matches[i]);
+			var matches = $.unique(matches);
+			
+			for (var i=0; i<matches.length; i++)
+			{
+				content = content.split(matches[i]).join('uniq_' + win.bxMod.makeid(10) + '_');
+				console.log(matches[i]);
+			}
 		}
 		
-		$('#'+uniqueID).append(content);
-		win.bxMod.editorLine--;
+		$('#'+containerId).append(content);
+		win.bxMod.appendedLine--;
+	}
+	win.bxMod.addEditorLine = function (uniqueID)
+	{
+		return win.bxMod.addTemplateToContainer(uniqueID, 'template-'+uniqueID);
 	}
 	win.bxMod.removeEditorLine = function (uniqueID)
 	{
 		$('#editorline-' + uniqueID).remove();
 	}
 	win.bxMod.makeid = function (length) {
-	var result			 = '';
-	var characters		 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-	var charactersLength = characters.length;
-	for ( var i = 0; i < length; i++ ) {
-		result += characters.charAt(Math.floor(Math.random() * charactersLength));
+		var result			 = '';
+		var characters		 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+		var charactersLength = characters.length;
+		for ( var i = 0; i < length; i++ ) {
+			result += characters.charAt(Math.floor(Math.random() * charactersLength));
+		}
+		return result;
 	}
-	return result;
-}
 })(jQuery, window)

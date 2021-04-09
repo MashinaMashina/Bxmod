@@ -3,26 +3,29 @@
 namespace MashinaMashina\Bxmod\Admin\Form\Editors;
 
 use \MashinaMashina\Bxmod\Tools\Html;
-use \Bitrix\Main\ORM\Objectify\EntityObject;
 use \Bitrix\Main\ORM\Fields;
 
 class EnumField extends ScalarField
 {
-	public static function buildInput(Fields\Field $field, EntityObject $entity, $table, $tagData = [])
+	public static function buildTag($name, $value, Fields\Field $field, $tagData = [])
 	{
+		// Для пользовательских полей индекс значения - это ключ
+		$valueIsKey = $field->getParameter('bxmod_uf_type') ? false : true;
+		
 		$options = '';
-		foreach ($field->getParameter('values') as $value)
+		foreach ($field->getParameter('values') as $key => $option)
 		{
-			$selected = ($value === $entity->get($field->getName()) ? 'selected' : '');
+			$optionValue = $valueIsKey ? $option : $key;
+			$selected = ($optionValue === $value ? 'selected' : '');
 			
 			$options .= Html::buildTag('option', [
-				'value' => $value,
+				'value' => $optionValue,
 				$selected => '',
-			], $value);
+			], $option);
 		}
 		
 		return Html::buildTag('select', $tagData + [
-			'name' => $field->getName(),
+			'name' => $name,
 		], $options);
 	}
 }

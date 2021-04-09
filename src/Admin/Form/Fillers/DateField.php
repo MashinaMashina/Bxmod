@@ -10,7 +10,17 @@ class DateField extends ScalarField
 	{
 		if (! is_object($value) and ! empty($value))
 		{
-			$value = Date::createFromTimestamp(strtotime($value));
+			if (is_array($value))
+			{
+				foreach ($value as &$val)
+				{
+					$val = Date::createFromTimestamp(strtotime($val));
+				}
+			}
+			else
+			{
+				$value = Date::createFromTimestamp(strtotime($value));
+			}
 		}
 		
 		return parent::fillEntity($entity, $field, $value);

@@ -56,7 +56,7 @@ class Iterator
 				
 				if (isset($currentValues[$fieldName]))
 				{
-					$entity->sysSetValue($fieldName, $$currentValues[$fieldName]);
+					$entity->sysSetValue($fieldName, $currentValues[$fieldName]);
 				}
 			}
 		}

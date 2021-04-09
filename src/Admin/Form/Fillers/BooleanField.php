@@ -8,7 +8,20 @@ class BooleanField extends ScalarField
 	{
 		if (! is_bool($value))
 		{
-			$value = ($value === 'Y' ? true : false);
+			if (is_array($value))
+			{
+				foreach ($value as &$val)
+				{
+					if (! is_bool($val))
+					{
+						$val = ($val === 'Y' ? true : false);
+					}
+				}
+			}
+			else
+			{
+				$value = ($value === 'Y' ? true : false);
+			}
 		}
 		
 		return parent::fillEntity($entity, $field, $value);

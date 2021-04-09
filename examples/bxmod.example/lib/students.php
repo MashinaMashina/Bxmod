@@ -16,6 +16,11 @@ class StudentsTable extends DataManager
 		return 'bxmod_students';
 	}
 	
+	public static function getUfId()
+    {
+        return 'MY_STUDENT';
+    }
+	
 	public static function getMap()
 	{
 		return [

@@ -8,6 +8,9 @@ use \Bitrix\Main\HttpRequest;
 
 abstract class Field
 {
+	/*
+	 * Функция требуется для работы типа Файл
+	 */
 	public static function getValueFromRequest(HttpRequest $request, Fields\Field $field)
 	{
 		return $request->getPost($field->getName());

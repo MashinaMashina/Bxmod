@@ -45,7 +45,7 @@ abstract class Relation extends Field
 		{
 			$result .= static::buildInput($field, $entity, $table, $tagData);
 		}
-		$result .= $twoColumns ? ' ' . $field->getDescription() : '';
+		$result .= $twoColumns ? ' ' . $field->getParameter('bxmod_description') : '';
 		$result .= '</td></tr>';
 		
 		return $result;

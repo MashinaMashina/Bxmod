@@ -9,3 +9,5 @@ $MESS['bxmod_entity'] = 'Сущность';
 $MESS['bxmod_not_selected'] = 'Не выбрано';
 $MESS['bxmod_yes'] = 'Да';
 $MESS['bxmod_no'] = 'Нет';
+
+$MESS['bxmod_add'] = 'Добавить';

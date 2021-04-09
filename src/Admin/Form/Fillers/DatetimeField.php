@@ -10,7 +10,17 @@ class DatetimeField extends DateField
 	{
 		if (! is_object($value) and ! empty($value))
 		{
-			$value = DateTime::createFromTimestamp(strtotime($value));
+			if (is_array($value))
+			{
+				foreach ($value as &$val)
+				{
+					$val = DateTime::createFromTimestamp(strtotime($val));
+				}
+			}
+			else
+			{
+				$value = DateTime::createFromTimestamp(strtotime($value));
+			}
 		}
 		
 		return parent::fillEntity($entity, $field, $value);

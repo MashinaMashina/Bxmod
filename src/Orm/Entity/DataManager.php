@@ -1,9 +1,9 @@
 <?php
 namespace MashinaMashina\Bxmod\Orm\Entity;
 
-use \Bitrix\Main\Entity;
+use \Bitrix\Main\ORM\Data;
 
-class DataManager extends Entity\DataManager
+class DataManager extends Data\DataManager
 {
 	public static function getCacheTag()
 	{

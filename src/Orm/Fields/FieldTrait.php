@@ -6,8 +6,6 @@ use Bitrix\Main\Localization\Loc;
 
 trait FieldTrait
 {
-	/** @var string */
-	protected $descr;
 	public $isbxmod = true;
 	
 	public function getEditorClass()
@@ -34,23 +32,26 @@ trait FieldTrait
 	 */
 	public function configureDescription($descr)
 	{
-		$this->descr = $descr;
+		$this->setParameter('bxmod_description', $descr);
 		return $this;
 	}
 
 	public function getDescription()
 	{
-		if($this->descr !== null)
+		$descr = $this->getParameter('bxmod_description');
+		
+		if($descr !== null)
 		{
-			return $this->descr;
+			return $descr;
 		}
 		
 		$langCode = $this->getLangCode() . '_DESCR';
 		if(($descr = Loc::getMessage($langCode)) !== '')
 		{
-			return $this->descr = $descr;
+			$this->setParameter('bxmod_description', $descr);
+			return $descr;
 		}
 
-		return $this->descr = '';
+		return '';
 	}
 }

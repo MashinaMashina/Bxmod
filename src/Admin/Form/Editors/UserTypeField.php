@@ -10,7 +10,7 @@ class UserTypeField extends Field
 {
 	public static function buildInput(Fields\Field $field, EntityObject $entity, $table, $tagData = [])
 	{
-		if (empty($field->getParameter('bxmod_type')))
+		if (empty($field->getParameter('bxmod_uf_type')))
 		{
 			UserField::fillUfFieldInfo($field);
 		}
@@ -18,6 +18,6 @@ class UserTypeField extends Field
 		/*
 		 * Передаем в обработчик соответствующий типу пользовательского поля
 		 */
-		return (__NAMESPACE__ .'\\'. $field->getParameter('bxmod_type'))::buildInput($field, $entity, $table, $tagData);
+		return (__NAMESPACE__ .'\\'. $field->getParameter('bxmod_uf_type'))::buildInput($field, $entity, $table, $tagData);
 	}
 }

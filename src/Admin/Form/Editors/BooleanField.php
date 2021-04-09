@@ -3,23 +3,22 @@
 namespace MashinaMashina\Bxmod\Admin\Form\Editors;
 
 use \MashinaMashina\Bxmod\Tools\Html;
-use \Bitrix\Main\ORM\Objectify\EntityObject;
 use \Bitrix\Main\ORM\Fields;
 
 class BooleanField extends ScalarField
 {
-	public static function buildInput(Fields\Field $field, EntityObject $entity, $table, $tagData = [])
+	public static function buildTag($name, $value, Fields\Field $field, $tagData = [])
 	{
-		$checked = ($entity->get($field->getName()) ? 'checked' : '');
+		$checked = ($value ? 'checked' : '');
 		
 		$str = Html::buildSimpleTag('input', [
-			'name' => $field->getName(),
+			'name' => $name,
 			'type' => 'hidden',
 			'value' => 'N',
 		]);
 		
 		return $str . Html::buildSimpleTag('input', $tagData + [
-			'name' => $field->getName(),
+			'name' => $name,
 			'type' => 'checkbox',
 			'value' => 'Y',
 			$checked => '',

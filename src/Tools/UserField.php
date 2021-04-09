@@ -16,15 +16,19 @@ class UserField
 		'hlblock' => 'StringField',
 		'iblock_element' => 'StringField',
 		'url_preview' => 'StringField',
-		'enumeration' => 'StringField',
+		'enumeration' => 'EnumField',
 		'url' => 'StringField',
 		'string' => 'StringField',
-		'file' => 'StringField',
+		'file' => 'FileField',
+		// 'file' => 'StringField',
 		'integer' => 'IntegerField',
 		'double' => 'FloatField',
 		'string_formatted' => 'StringField',
 	];
 	
+	/*
+	 * Дополняет пользовательское поле необходимыми даными
+	 */
 	public static function fillUfFieldInfo(Fields\Field $field)
 	{
 		$fieldName = $field->getName();
@@ -43,19 +47,35 @@ class UserField
 				$field->setParameter('required', true);
 			}
 			
-			if ($field->isMultiple())
-			{
-				$field->setParameter('bxmod_type', 'TextField');
-			}
-			else
-			{
-				$field->setParameter('bxmod_type', self::ALIASES[$arUf['USER_TYPE_ID']]);
-			}
-			
 			if (! empty($arUf['EDIT_FORM_LABEL']))
 			{
 				$field->configureTitle($arUf['EDIT_FORM_LABEL']);
 			}
+			if (! empty($arUf['HELP_MESSAGE']))
+			{
+				$field->setParameter('bxmod_description', $arUf['HELP_MESSAGE']);
+			}
+			
+			$field->setParameter('bxmod_uf_type', self::ALIASES[$arUf['USER_TYPE_ID']]);
+			
+			if ($arUf['USER_TYPE_ID'] === 'enumeration')
+			{
+				$res = \CUserFieldEnum::GetList(['DEF' => 'DESC'], [
+					'USER_FIELD_ID' => $arUf['ID'],
+				]);
+				
+				$options = [];
+				while($arOption = $res->fetch())
+				{
+					$options[$arOption['ID']] = $arOption['VALUE'];
+				}
+				
+				$field->setParameter('values', $options);
+			}
+			
+			return $arUf;
 		}
+		
+		return null;
 	}
 }

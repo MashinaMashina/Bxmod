@@ -21,12 +21,19 @@ abstract class Field
 			$fieldName = '<b>' . $fieldName . '</b>'; 
 		}
 		
-		$result = '<tr><td width="40%">';
+		$result = '<tr>';
+		$result .= '<td width="40%">';
 		$result .= $fieldName;
-		$result .= '</td><td width="60%">';
+		$result .= '</td>';
+		$result .= '<td width="60%">';
+		$result .= '<div class="bxmod-input-block">';
 		$result .= static::buildInput($field, $entity, $table, $tagData);
-		$result .= ' ' . $field->getDescription();
-		$result .= '</td></tr>';
+		$result .= '</div>';
+		$result .= '<div class="bxmod-help-block">';
+		$result .= $field->getParameter('bxmod_description');
+		$result .= '</div>';
+		$result .= '</td>';
+		$result .= '</tr>' . PHP_EOL;
 		
 		return $result;
 	}
